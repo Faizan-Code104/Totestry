@@ -1,12 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
-import { BUSINESS_INFO, getFullAddress } from "../storeInfo";
+import { BUSINESS_INFO, getFullAddress, getEmailLink } from "../storeInfo";
+import { PolicyPage, PolicySection } from "./PolicyKit";
 
 const brand = BUSINESS_INFO.businessName;
-const updatedDate = "October 3, 2026";
 
+const UPDATED = { iso: "2026-10-04", label: "October 4, 2026" };
+
+// Business name, address, email, phone and hours — read from storeInfo.js
 const BusinessDetails = ({ showHours = false }) => {
   const address = getFullAddress();
 
@@ -24,24 +26,20 @@ const BusinessDetails = ({ showHours = false }) => {
     : "";
 
   return (
-    <address className="fbterms-business">
+    <address className="tt-policy-address">
       <strong>{brand}</strong>
 
       {address && <span>{address}</span>}
 
       {BUSINESS_INFO.email && (
         <span>
-          Email:{" "}
-          <a href={`mailto:${BUSINESS_INFO.email}`}>
-            {BUSINESS_INFO.email}
-          </a>
+          Email: <a href={getEmailLink()}>{BUSINESS_INFO.email}</a>
         </span>
       )}
 
       {phone && (
         <span>
-          Phone:{" "}
-          {phoneHref ? <a href={phoneHref}>{phone}</a> : phone}
+          Phone: {phoneHref ? <a href={phoneHref}>{phone}</a> : phone}
         </span>
       )}
 
@@ -542,654 +540,58 @@ const sections = [
   },
 ];
 
+// Side navigation entries (ids are section-1, section-2, …)
+const NAV_SECTIONS = sections.map((section, index) => ({
+  id: `section-${index + 1}`,
+  title: section.title,
+}));
+
 const TermsAndConditions = () => {
   return (
-    <main className="fbterms" id="fbterms-top">
-      <style>{styles}</style>
-
-      <div className="fbterms-wrap">
-        <div className="fbterms-topline">
-          <Link to="/">
-            <ArrowLeft size={16} aria-hidden="true" />
-            Back to home
-          </Link>
-          <span>{brand}</span>
-        </div>
-
-        <header className="fbterms-header">
-          <div>
-            <p className="fbterms-eyebrow">Website &amp; purchase terms</p>
-            <h1>
-              Terms &amp;
-              <br />
-              <span>Conditions.</span>
-            </h1>
-          </div>
-
-          <div className="fbterms-header-note">
-            <p className="fbterms-eyebrow">Please read before ordering</p>
-            <p>
-              These Terms explain the conditions that apply when you use our
-              website or purchase from {brand}.
-            </p>
-
-            <dl>
-              <div>
-                <dt>Last updated</dt>
-                <dd>
-                  <time dateTime="2026-10-03">{updatedDate}</time>
-                </dd>
-              </div>
-              <div>
-                <dt>Document</dt>
-                <dd>{sections.length} sections</dd>
-              </div>
-            </dl>
-          </div>
-        </header>
-
-        <div className="fbterms-introduction">
-          <span className="fbterms-eyebrow">Your agreement</span>
-
-          <p>
-            These Terms and Conditions (“Terms”) govern your access to and use
-            of{" "}
-            {BUSINESS_INFO.website ? (
-              <a href={BUSINESS_INFO.website}>{BUSINESS_INFO.website}</a>
-            ) : (
-              "our website"
-            )}{" "}
-            and any purchase from {brand}. By using our website or placing an
-            order, you agree to these Terms.
-          </p>
-        </div>
-
-        <details className="fbterms-index">
-          <summary>
-            Browse the document
-            <span>{sections.length} sections</span>
-          </summary>
-
-          <nav aria-label="Terms and Conditions contents">
-            {sections.map((section, index) => (
-              <a
-                key={section.title}
-                href={`#fbterms-section-${index + 1}`}
-              >
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                {section.title}
-              </a>
-            ))}
-          </nav>
-        </details>
-
-        <div className="fbterms-document">
-          {sections.map((section, index) => (
-            <section
-              key={section.title}
-              id={`fbterms-section-${index + 1}`}
-              className="fbterms-section"
-              aria-labelledby={`fbterms-title-${index + 1}`}
-            >
-              <div className="fbterms-section-heading">
-                <span className="fbterms-number" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-
-                <h2 id={`fbterms-title-${index + 1}`}>
-                  {section.title}
-                </h2>
-              </div>
-
-              <div className="fbterms-section-body">
-                {section.content}
-              </div>
-            </section>
-          ))}
-        </div>
-
-        <footer className="fbterms-footer">
-          <div>
-            <p className="fbterms-eyebrow">Need assistance?</p>
-            <h2>We’re here to help.</h2>
-            <p>Contact our team with questions about these Terms.</p>
-          </div>
-
-          <Link to="/contact" className="fbterms-contact-button">
-            Contact us
-            <ArrowUpRight size={19} aria-hidden="true" />
-          </Link>
-        </footer>
-
-        <div className="fbterms-bottom">
-          <span>{brand} / Terms &amp; Conditions</span>
-          <a href="#fbterms-top">Back to top ↑</a>
-        </div>
-      </div>
-    </main>
+    <PolicyPage
+      name="Terms & Conditions"
+      index={String(sections.length)}
+      eyebrow={`${brand} / Website & purchase terms`}
+      title={
+        <>
+          Terms &amp; <em>Conditions.</em>
+        </>
+      }
+      summary={`These Terms explain the conditions that apply when you use our website or purchase from ${brand}.`}
+      updated={UPDATED}
+      sections={NAV_SECTIONS}
+      introLabel={`Your agreement · ${sections.length} sections`}
+      intro={
+        <>
+          These Terms and Conditions (“Terms”) govern your access to and use
+          of{" "}
+          {BUSINESS_INFO.website ? (
+            <a href={BUSINESS_INFO.website}>{BUSINESS_INFO.website}</a>
+          ) : (
+            "our website"
+          )}{" "}
+          and any purchase from {brand}. By using our website or placing an
+          order, you agree to these Terms.
+        </>
+      }
+      help={{
+        eyebrow: "Please read before ordering",
+        title: "A question about these Terms?",
+        text: "Visit our contact page for assistance.",
+      }}
+    >
+      {sections.map((section, index) => (
+        <PolicySection
+          key={section.title}
+          id={`section-${index + 1}`}
+          number={index + 1}
+          title={section.title}
+        >
+          {section.content}
+        </PolicySection>
+      ))}
+    </PolicyPage>
   );
 };
-
-const styles = `
-  .fbterms {
-    --ink: #173f36;
-    --deep: #102e28;
-    --paper: #fffdf5;
-    --bone: #f5f0e6;
-    --brass: #a56e4f;
-    --muted: #626e67;
-    --line: rgba(23, 63, 54, .17);
-
-    min-height: 100vh;
-    background: var(--paper);
-    color: var(--ink);
-    font-family: 'Onest', ui-sans-serif, system-ui, sans-serif;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .fbterms *,
-  .fbterms *::before,
-  .fbterms *::after {
-    box-sizing: border-box;
-  }
-
-  .fbterms a {
-    color: inherit;
-    text-underline-offset: 4px;
-    overflow-wrap: anywhere;
-  }
-
-  .fbterms a:focus-visible,
-  .fbterms summary:focus-visible {
-    outline: 2px solid var(--brass);
-    outline-offset: 5px;
-  }
-
-  .fbterms-wrap {
-    width: min(100%, 1240px);
-    margin-inline: auto;
-    padding-inline: clamp(20px, 5vw, 64px);
-  }
-
-  .fbterms-topline {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    min-height: 78px;
-    border-bottom: 1px solid var(--line);
-    font-size: 11px;
-  }
-
-  .fbterms-topline a {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 44px;
-    text-decoration: none;
-  }
-
-  .fbterms-topline > span {
-    font-weight: 600;
-    text-align: right;
-  }
-
-  .fbterms-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    align-items: end;
-    gap: clamp(30px, 6vw, 80px);
-    padding-block: clamp(42px, 7vw, 84px);
-    animation: fbtermsEnter .5s ease both;
-  }
-
-  .fbterms-eyebrow {
-    margin: 0;
-    color: var(--brass);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-  }
-
-  .fbterms-header h1 {
-    margin: 23px 0 0;
-    font-size: clamp(48px, 7vw, 88px);
-    font-weight: 500;
-    line-height: 1.04;
-    letter-spacing: -.065em;
-  }
-
-  .fbterms-header h1 > span {
-    color: var(--brass);
-  }
-
-  .fbterms-header-note {
-    padding-bottom: 5px;
-  }
-
-  .fbterms-header-note > p:not(.fbterms-eyebrow) {
-    margin: 18px 0 26px;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.9;
-  }
-
-  .fbterms-header-note dl {
-    margin: 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .fbterms-header-note dl > div {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding-block: 13px;
-    border-bottom: 1px solid var(--line);
-    font-size: 11px;
-  }
-
-  .fbterms-header-note dt {
-    color: var(--muted);
-  }
-
-  .fbterms-header-note dd {
-    margin: 0;
-    font-weight: 500;
-  }
-
-  .fbterms-introduction {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    align-items: start;
-    gap: 35px;
-    padding: 30px;
-    background: var(--bone);
-    border: 1px solid var(--line);
-  }
-
-  .fbterms-introduction > span {
-    padding-top: 5px;
-  }
-
-  .fbterms-introduction p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.95;
-  }
-
-  .fbterms-introduction a {
-    color: var(--ink);
-  }
-
-  .fbterms-index {
-    margin-block: 26px 42px;
-    border-block: 1px solid var(--line);
-  }
-
-  .fbterms-index summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    min-height: 62px;
-    padding: 16px 4px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .fbterms-index summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .fbterms-index summary > span {
-    display: inline-flex;
-    align-items: center;
-    gap: 18px;
-    color: var(--muted);
-    font-size: 10px;
-    font-weight: 400;
-  }
-
-  .fbterms-index summary > span::after {
-    content: "+";
-    color: var(--ink);
-    font-size: 22px;
-    line-height: 1;
-  }
-
-  .fbterms-index[open] summary > span::after {
-    content: "−";
-  }
-
-  .fbterms-index nav {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px 24px;
-    padding: 6px 4px 24px;
-  }
-
-  .fbterms-index nav a {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    min-width: 0;
-    min-height: 44px;
-    padding-block: 10px;
-    text-decoration: none;
-    color: var(--muted);
-    font-size: 11px;
-    transition: color .2s ease;
-  }
-
-  .fbterms-index nav a:hover {
-    color: var(--ink);
-    text-decoration: underline;
-  }
-
-  .fbterms-index nav a > span {
-    flex-shrink: 0;
-    color: var(--brass);
-    font-size: 9px;
-    padding-top: 2px;
-  }
-
-  .fbterms-section {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    gap: clamp(30px, 5vw, 65px);
-    padding-block: 34px;
-    border-bottom: 1px solid var(--line);
-    scroll-margin-top: 28px;
-  }
-
-  .fbterms-section:first-child {
-    padding-top: 0;
-  }
-
-  .fbterms-section-heading {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    min-width: 0;
-  }
-
-  .fbterms-number {
-    color: var(--brass);
-    font-size: 11px;
-    letter-spacing: .05em;
-  }
-
-  .fbterms-section h2 {
-    max-width: 280px;
-    margin: 0;
-    font-size: 24px;
-    font-weight: 500;
-    line-height: 1.3;
-    letter-spacing: -.035em;
-    overflow-wrap: anywhere;
-  }
-
-  .fbterms-section-body {
-    min-width: 0;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.95;
-    overflow-wrap: anywhere;
-  }
-
-  .fbterms-section-body p {
-    margin: 0 0 16px;
-  }
-
-  .fbterms-section-body > :last-child {
-    margin-bottom: 0;
-  }
-
-  .fbterms-section-body a {
-    color: var(--ink);
-    font-weight: 500;
-  }
-
-  .fbterms-section-body ul {
-    margin: 16px 0 20px;
-    padding-left: 20px;
-  }
-
-  .fbterms-section-body li {
-    padding-left: 4px;
-    margin-bottom: 8px;
-  }
-
-  .fbterms-section-body li::marker {
-    color: var(--brass);
-  }
-
-  .fbterms-business {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    margin-block: 18px;
-    font-style: normal;
-  }
-
-  .fbterms-business strong {
-    color: var(--ink);
-    font-weight: 600;
-  }
-
-  .fbterms-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 30px;
-    padding: 36px;
-    margin-top: 45px;
-    background: var(--bone);
-    border: 1px solid var(--line);
-  }
-
-  .fbterms-footer h2 {
-    margin: 12px 0 0;
-    font-size: clamp(28px, 3.5vw, 40px);
-    font-weight: 500;
-    line-height: 1.2;
-    letter-spacing: -.045em;
-  }
-
-  .fbterms-footer > div > p:last-child {
-    margin: 12px 0 0;
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .fbterms-contact-button {
-    display: inline-flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 38px;
-    min-height: 52px;
-    padding: 14px 20px;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #fff !important;
-    font-size: 12px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: background .2s ease;
-  }
-
-  .fbterms-contact-button:hover {
-    background: var(--deep);
-  }
-
-  .fbterms-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    padding-block: 24px 42px;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fbterms-bottom a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-
-  @keyframes fbtermsEnter {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (max-width: 1000px) {
-    .fbterms-header {
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-      gap: 35px;
-    }
-
-    .fbterms-index nav {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .fbterms-section h2 {
-      font-size: 22px;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .fbterms-topline {
-      min-height: 68px;
-      font-size: 10px;
-    }
-
-    .fbterms-header {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 30px;
-      padding-block: 38px;
-    }
-
-    .fbterms-header h1 {
-      font-size: clamp(48px, 10vw, 68px);
-    }
-
-    .fbterms-header-note > p:not(.fbterms-eyebrow) {
-      margin-bottom: 20px;
-    }
-
-    .fbterms-introduction {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 15px;
-      padding: 24px;
-    }
-
-    .fbterms-index {
-      margin-bottom: 28px;
-    }
-
-    .fbterms-section {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 20px;
-      padding-block: 28px;
-    }
-
-    .fbterms-section-heading {
-      flex-direction: row;
-      align-items: baseline;
-      gap: 15px;
-    }
-
-    .fbterms-number {
-      flex-shrink: 0;
-    }
-
-    .fbterms-section h2 {
-      max-width: none;
-      font-size: 23px;
-    }
-
-    .fbterms-section-body {
-      font-size: 13px;
-    }
-
-    .fbterms-footer {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 24px;
-      padding: 28px 24px;
-      margin-top: 32px;
-    }
-
-    .fbterms-contact-button {
-      width: 100%;
-    }
-
-    .fbterms-bottom {
-      flex-wrap: wrap;
-      gap: 8px 20px;
-      padding-bottom: 28px;
-    }
-  }
-
-  @media (max-width: 420px) {
-    .fbterms-header h1 {
-      font-size: clamp(40px, 12vw, 50px);
-    }
-
-    .fbterms-index nav {
-      grid-template-columns: minmax(0, 1fr);
-      max-height: 380px;
-      overflow-y: auto;
-      padding-inline: 6px;
-    }
-
-    .fbterms-index summary {
-      gap: 12px;
-      font-size: 12px;
-    }
-
-    .fbterms-index summary > span {
-      gap: 12px;
-      font-size: 9px;
-    }
-
-    .fbterms-introduction {
-      padding: 22px 18px;
-    }
-
-    .fbterms-section h2 {
-      font-size: 21px;
-    }
-
-    .fbterms-footer {
-      padding: 24px 20px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fbterms *,
-    .fbterms *::before,
-    .fbterms *::after {
-      animation: none !important;
-      transition: none !important;
-    }
-  }
-`;
 
 export default TermsAndConditions;

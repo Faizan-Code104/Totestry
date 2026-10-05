@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  ArrowUp,
   ArrowUpRight,
   Clock,
   Mail,
@@ -8,77 +9,89 @@ import {
   Menu,
   Phone,
   Search,
+  ShoppingBag,
   User,
   X,
 } from "lucide-react";
 
 import { useCart } from "./CartContext";
-import storeInfo, { getFullAddress } from "../storeInfo";
+import storeInfo, {
+  getAddressLines,
+  getEmailLink,
+  getPhoneLink,
+} from "../storeInfo";
+import Reveal from "./Reveal";
 
 const navigation = [
-  { name: "Home", path: "/" },
-  { name: "Shop", path: "/shop" },
-  { name: "Collection", path: "/categories" },
-  { name: "About", path: "/about" },
+  { name: "Shop all", path: "/shop" },
+  { name: "Collections", path: "/categories" },
+  { name: "Our story", path: "/about" },
   { name: "Contact", path: "/contact" },
+  { name: "Help", path: "/faqs" },
 ];
 
-const referenceLinks = [
-  { name: "FAQ", note: "Quick answers", path: "/faqs" },
-  {
-    name: "Shipping policy",
-    note: "Delivery information",
-    path: "/shipping-policy",
-  },
-  {
-    name: "Returns & refunds",
-    note: "Before you purchase",
-    path: "/return-policy",
-  },
-  {
-    name: "Privacy policy",
-    note: "Your information",
-    path: "/privacy-policy",
-  },
-  {
-    name: "Terms of use",
-    note: "Site information",
-    path: "/terms-and-conditions",
-  },
-];
-
-const extraLinks = [
-  { name: "Payment policy", path: "/payment-policy" },
-  {
-    name: "Order cancellation",
-    path: "/order-cancellation-policy",
-  },
-  { name: "Cookie policy", path: "/cookie-policy" },
+const mobileNavigation = [
+  { name: "Home", path: "/" },
+  ...navigation,
   { name: "Track your order", path: "/track-order" },
+  { name: "My account", path: "/login" },
 ];
+
+const footerLinks = {
+  Explore: [
+    { name: "Home", path: "/" },
+    { name: "Shop all", path: "/shop" },
+    { name: "Collections", path: "/categories" },
+    { name: "Our story", path: "/about" },
+    { name: "Contact", path: "/contact" },
+  ],
+  Help: [
+    { name: "FAQ", path: "/faqs" },
+    { name: "Track your order", path: "/track-order" },
+    { name: "Shipping policy", path: "/shipping-policy" },
+    { name: "Returns & refunds", path: "/return-policy" },
+    { name: "Order cancellation", path: "/order-cancellation-policy" },
+  ],
+  "The details": [
+    { name: "Terms of use", path: "/terms-and-conditions" },
+    { name: "Privacy policy", path: "/privacy-policy" },
+    { name: "Payment policy", path: "/payment-policy" },
+    { name: "Cookie policy", path: "/cookie-policy" },
+  ],
+};
+
+// Text logo — the brand name comes from storeInfo.js
+const BrandLogo = () => (
+  <span className="tt-logo">
+    <span className="tt-logo-mark" aria-hidden="true">
+      ✳
+    </span>
+    {storeInfo.businessName.toUpperCase()}
+    <span className="tt-logo-dot" aria-hidden="true">
+      .
+    </span>
+  </span>
+);
 
 const Layout = ({ children }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const menuRef = useRef(null);
-  const menuButtonRef = useRef(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  const searchInputRef = useRef(null);
 
   const { cartCount } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const address = getFullAddress();
-  const hours = [
-    storeInfo.businessDays,
-    [storeInfo.supportHours, storeInfo.timeZone]
-      .filter(Boolean)
-      .join(" "),
-  ]
+  const count = cartCount || 0;
+  const addressLines = getAddressLines();
+  const emailLink = getEmailLink();
+  const phoneLink = getPhoneLink();
+  const hoursLine = [storeInfo.supportHours, storeInfo.timeZone]
     .filter(Boolean)
-    .join(" · ");
-
-  const phoneHref =
-    storeInfo.phoneHref ||
-    storeInfo.phoneDisplay.replace(/[^\d+]/g, "");
+    .join(" ");
 
   const isActive = (path) =>
     path === "/"
@@ -86,8 +99,9 @@ const Layout = ({ children }) => {
       : location.pathname === path ||
         location.pathname.startsWith(`${path}/`);
 
-  const closeMenu = () => {
-    menuRef.current?.close();
+  const closePanels = () => {
+    setMenuOpen(false);
+    setSearchOpen(false);
   };
 
   const handleSearch = (event) => {
@@ -97,503 +111,346 @@ const Layout = ({ children }) => {
     if (!query) return;
 
     navigate(`/shop?search=${encodeURIComponent(query)}`);
-    closeMenu();
+    closePanels();
   };
 
+  // Close the menu and search whenever the route changes
   useEffect(() => {
-    menuRef.current?.close();
+    setMenuOpen(false);
+    setSearchOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
+  // Header tightens and gains a shadow once the page is scrolled
   useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 1280px)");
-    const handleResize = () => {
-      if (desktop.matches) menuRef.current?.close();
-    };
+    const onScroll = () => setScrolled(window.scrollY > 25);
 
-    desktop.addEventListener("change", handleResize);
-    return () => desktop.removeEventListener("change", handleResize);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Lock page scroll while the mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  // Escape closes whatever is open; desktop width closes the mobile menu
+  useEffect(() => {
+    if (!menuOpen && !searchOpen) return undefined;
+
+    const onKey = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setSearchOpen(false);
+      }
+    };
+
+    const desktop = window.matchMedia("(min-width: 851px)");
+    const onResize = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", onKey);
+    desktop.addEventListener("change", onResize);
+
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      desktop.removeEventListener("change", onResize);
+    };
+  }, [menuOpen, searchOpen]);
+
+  // Put the cursor in the search field as soon as it opens
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-paper font-sans text-navy">
-      <style>{`
-        .fb-mobile-dialog {
-          position: fixed;
-          inset: 0 0 0 auto;
-          margin: 0;
-          width: min(100%, 440px);
-          height: 100dvh;
-          max-width: 100%;
-          max-height: 100dvh;
-          padding: 0;
-          border: 0;
-          overflow-y: auto;
-          overscroll-behavior: contain;
-          background: #FFFAF3;
-          color: #17243B;
-        }
-
-        .fb-mobile-dialog::backdrop {
-          background: rgba(16, 27, 46, 0.65);
-          backdrop-filter: blur(3px);
-        }
-
-        body:has(.fb-mobile-dialog[open]) {
-          overflow: hidden;
-        }
-      `}</style>
-
-      <a
-        href="#main-content"
-        className="sr-only z-[100] bg-navy px-5 py-3 text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
-      >
+    <div className="tt-site">
+      <a href="#main-content" className="tt-skip">
         Skip to content
       </a>
 
+      {/* PROMO BAR */}
+      <div className="tt-promo">
+        <span>The new edit</span>
+        <span>Find your way to carry</span>
+        <Link to="/shop">
+          Explore the collection
+          <ArrowUpRight size={13} strokeWidth={2.2} aria-hidden="true" />
+        </Link>
+      </div>
+
       {/* HEADER */}
-      <header className="border-b border-navy/25 bg-paper">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-10 xl:min-h-24">
-          <nav
-            aria-label="Main navigation"
-            className="hidden min-w-0 items-center gap-6 xl:flex"
+      <header className={`tt-header${scrolled ? " is-scrolled" : ""}`}>
+        <div className="tt-header-shell">
+          <button
+            type="button"
+            className="tt-icon-button tt-menu-toggle"
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={menuOpen}
+            aria-controls="tt-mobile-nav"
+            onClick={() => {
+              setSearchOpen(false);
+              setMenuOpen((open) => !open);
+            }}
           >
-            {navigation.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                aria-current={isActive(item.path) ? "page" : undefined}
-                className={`inline-flex min-h-11 items-center gap-1 border-b text-sm font-semibold transition-colors ${
-                  isActive(item.path)
-                    ? "border-gold text-navy"
-                    : "border-transparent hover:border-gold"
-                }`}
-              >
-                {item.name}
-                {item.path === "/shop" && (
-                  <ArrowUpRight
-                    size={13}
-                    className="text-gold"
-                    aria-hidden="true"
-                  />
-                )}
-              </Link>
-            ))}
-          </nav>
+            {menuOpen ? (
+              <X size={23} strokeWidth={1.7} aria-hidden="true" />
+            ) : (
+              <Menu size={23} strokeWidth={1.7} aria-hidden="true" />
+            )}
+          </button>
 
           <Link
             to="/"
+            className="tt-header-logo"
             aria-label={`${storeInfo.businessName} home`}
-            className="min-w-0 shrink-0 xl:order-last"
+            onClick={closePanels}
           >
-            <img
-              src="/logo-mark.png"
-              alt={storeInfo.businessName}
-              width="196"
-              height="56"
-              className="h-auto w-[128px] -rotate-3 transition-transform hover:rotate-0 sm:w-[170px] xl:w-[196px]"
-              style={{
-                filter:
-                  "brightness(0) saturate(100%) invert(12%) sepia(19%) saturate(1500%) hue-rotate(179deg) brightness(94%) contrast(95%)",
-              }}
-            />
+            <BrandLogo />
           </Link>
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-3">
-            <form
-              onSubmit={handleSearch}
-              role="search"
-              className="hidden h-11 w-[175px] items-center border-b border-navy/30 md:flex 2xl:w-[210px]"
-            >
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search bags..."
-                aria-label="Search products"
-                className="h-full min-w-0 flex-1 bg-transparent px-2 text-sm placeholder:text-mute"
-              />
-              <button
-                type="submit"
-                aria-label="Search"
-                className="flex h-11 w-11 shrink-0 items-center justify-center hover:text-gold"
-              >
-                <Search size={18} />
-              </button>
-            </form>
-
-            <Link
-              to="/login"
-              aria-label="My account"
-              className="hidden h-11 w-11 items-center justify-center hover:text-gold sm:flex"
-            >
-              <User size={19} strokeWidth={1.7} />
-            </Link>
-
-            <Link
-  to="/cart"
-  aria-label={`Shopping cart with ${cartCount || 0} items`}
-  className="inline-flex min-h-11 items-center gap-1 px-2 text-xs font-semibold hover:text-gold sm:text-sm"
->
-  Cart
-  <span>({cartCount || 0})</span>
-</Link>
-
-            <a
-              href="#help"
-              className="hidden min-h-11 items-center px-2 text-sm font-semibold hover:text-gold xl:inline-flex"
-            >
-              Help
-            </a>
-
-            <button
-              ref={menuButtonRef}
-              type="button"
-              aria-label="Open navigation"
-              aria-haspopup="dialog"
-              aria-controls="fablebelle-navigation"
-              onClick={() => menuRef.current?.showModal()}
-              className="flex h-11 w-11 items-center justify-center hover:text-gold xl:hidden"
-            >
-              <Menu size={23} strokeWidth={1.7} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* MOBILE AND TABLET NAVIGATION */}
-      <dialog
-        ref={menuRef}
-        id="fablebelle-navigation"
-        aria-labelledby="fablebelle-menu-title"
-        className="fb-mobile-dialog"
-        onClose={() => menuButtonRef.current?.focus()}
-        onClick={(event) => {
-          if (event.target !== event.currentTarget) return;
-
-          const bounds = event.currentTarget.getBoundingClientRect();
-          if (
-            event.clientX < bounds.left ||
-            event.clientX > bounds.right ||
-            event.clientY < bounds.top ||
-            event.clientY > bounds.bottom
-          ) {
-            closeMenu();
-          }
-        }}
-      >
-        <div className="p-6 sm:p-8">
-          <div className="mb-8 flex items-center justify-between gap-4">
-            <h2
-              id="fablebelle-menu-title"
-              className="text-xl font-semibold tracking-tight"
-            >
-              {storeInfo.businessName}
-            </h2>
-
-            <button
-              type="button"
-              onClick={closeMenu}
-              aria-label="Close navigation"
-              className="flex h-11 w-11 items-center justify-center border border-navy/30"
-            >
-              <X size={21} />
-            </button>
-          </div>
-
-          <form
-            onSubmit={handleSearch}
-            role="search"
-            className="mb-7 flex min-h-12 border border-navy/30"
-          >
-            <input
-              type="search"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search handbags..."
-              aria-label="Search products"
-              className="min-w-0 flex-1 bg-transparent px-4 text-sm"
-            />
-            <button
-              type="submit"
-              aria-label="Search"
-              className="flex w-12 shrink-0 items-center justify-center"
-            >
-              <Search size={19} />
-            </button>
-          </form>
-
-          <nav aria-label="Mobile navigation">
+          <nav className="tt-nav" aria-label="Main navigation">
             {navigation.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={closeMenu}
                 aria-current={isActive(item.path) ? "page" : undefined}
-                className={`flex min-h-16 items-center justify-between gap-4 border-b border-navy/20 px-2 text-xl tracking-tight transition-colors ${
-                  isActive(item.path)
-                    ? "bg-champagne"
-                    : "hover:bg-champagne"
-                }`}
+                className={isActive(item.path) ? "is-active" : undefined}
               >
                 {item.name}
-                <ArrowUpRight size={20} aria-hidden="true" />
               </Link>
             ))}
           </nav>
 
-          <Link
-            to="/login"
-            onClick={closeMenu}
-            className="mt-8 flex min-h-12 items-center justify-center gap-3 bg-navy px-5 py-3 text-sm font-semibold text-white hover:bg-navy-dark"
-          >
-            <User size={17} />
-            My account
-          </Link>
+          <div className="tt-actions">
+            <button
+              type="button"
+              className="tt-icon-button"
+              aria-label={searchOpen ? "Close search" : "Search products"}
+              aria-expanded={searchOpen}
+              aria-controls="tt-search"
+              onClick={() => {
+                setMenuOpen(false);
+                setSearchOpen((open) => !open);
+              }}
+            >
+              {searchOpen ? (
+                <X size={21} strokeWidth={1.7} aria-hidden="true" />
+              ) : (
+                <Search size={21} strokeWidth={1.7} aria-hidden="true" />
+              )}
+            </button>
 
-          <Link
-            to="/track-order"
-            onClick={closeMenu}
-            className="mt-3 flex min-h-12 items-center justify-center border border-navy/30 px-5 py-3 text-sm"
-          >
-            Track your order
-          </Link>
+            <Link
+              to="/login"
+              className="tt-icon-button tt-account"
+              aria-label="My account"
+            >
+              <User size={21} strokeWidth={1.7} aria-hidden="true" />
+            </Link>
+
+            <Link
+              to="/cart"
+              className="tt-bag"
+              aria-label={`Shopping cart with ${count} items`}
+            >
+              <ShoppingBag size={19} strokeWidth={1.7} aria-hidden="true" />
+              <span>Cart</span>
+              {/* key restarts the small "pop" animation when the count changes */}
+              <b key={count}>{count > 99 ? "99+" : count}</b>
+            </Link>
+          </div>
         </div>
-      </dialog>
+
+        {/* SEARCH PANEL */}
+        {searchOpen && (
+          <div id="tt-search" className="tt-search">
+            <form onSubmit={handleSearch} role="search">
+              <span className="tt-search-label">Find your next favourite</span>
+
+              <label className="tt-search-field">
+                <Search size={26} strokeWidth={1.6} aria-hidden="true" />
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search handbags…"
+                  aria-label="Search products"
+                  autoComplete="off"
+                />
+                <button type="submit" className="tt-button tt-button--dark">
+                  Search
+                </button>
+              </label>
+            </form>
+          </div>
+        )}
+
+        {/* MOBILE AND TABLET NAVIGATION */}
+        {menuOpen && (
+          <nav
+            id="tt-mobile-nav"
+            className="tt-mobile-nav"
+            aria-label="Mobile navigation"
+          >
+            {mobileNavigation.map((item, index) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={closePanels}
+                aria-current={isActive(item.path) ? "page" : undefined}
+                className={isActive(item.path) ? "is-active" : undefined}
+                style={{ animationDelay: `${60 + index * 45}ms` }}
+              >
+                {item.name}
+                <ArrowUpRight size={19} strokeWidth={1.7} aria-hidden="true" />
+              </Link>
+            ))}
+          </nav>
+        )}
+      </header>
 
       {/* PAGE CONTENT */}
-      <main id="main-content" tabIndex={-1} className="min-w-0">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        key={location.pathname}
+        className="tt-page"
+      >
         {children}
       </main>
 
-      {/* BRAND STRIP */}
-      <section
-        aria-label="FableBelle approach"
-        className="bg-gold text-white"
-      >
-        <div className="mx-auto flex max-w-[1600px] items-center gap-5 px-5 py-8 sm:px-6 lg:gap-8 lg:px-10 lg:py-10">
-          <span
-            aria-hidden="true"
-            className="shrink-0 text-4xl font-bold tracking-[-0.12em]"
-          >
-            f<span className="text-champagne">.</span>b
-          </span>
-
-          <p className="text-lg font-medium leading-snug tracking-[-0.04em] sm:text-2xl lg:text-3xl">
-            Good design leaves room for your life.
-          </p>
-
-          <span className="ml-auto hidden shrink-0 text-[10px] font-bold uppercase tracking-[0.15em] xl:block">
-            Make it yours / Carry it your way
-          </span>
-        </div>
-      </section>
-
-      {/* SERVICE DESK */}
-      <footer id="help" className="scroll-mt-6 bg-navy-dark text-paper">
-        <div className="mx-auto max-w-[1600px] px-5 pb-6 pt-16 sm:px-6 sm:pt-20 lg:px-10 lg:pt-28">
-          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.6fr_0.6fr] lg:gap-10">
-            <p className="flex items-start gap-3 pt-2 text-[10px] font-bold uppercase tracking-[0.13em] sm:text-xs">
-              <span
-                aria-hidden="true"
-                className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-champagne"
-              />
-              {storeInfo.businessName} / Service desk
-            </p>
-
-            <div className="min-w-0">
-              <h2 className="text-[clamp(2.5rem,6vw,6rem)] font-medium leading-[1.04] tracking-[-0.065em]">
-                Need a hand
+      {/* FOOTER */}
+      <footer id="help" className="tt-footer">
+        <div className="tt-footer-inner">
+          <Reveal className="tt-footer-top">
+            <div>
+              <p className="tt-footer-eyebrow">
+                {storeInfo.businessName} / The bag edit
+              </p>
+              <h2>
+                Take your day
                 <br />
-                with the details?
+                <em>somewhere new.</em>
               </h2>
-
-              <p className="mt-5 max-w-md text-sm leading-7 text-paper/80 sm:text-base">
-                Start with a question. Product and order information should
-                feel straightforward from the first look.
-              </p>
             </div>
 
-            <Link
-              to="/contact"
-              className="flex h-28 w-28 flex-col justify-center gap-3 rounded-full bg-champagne p-5 text-sm font-bold leading-tight text-navy transition-transform hover:rotate-0 sm:h-32 sm:w-32 lg:rotate-6 lg:self-end lg:justify-self-end"
-            >
-              Contact
-              <br />
-              details
-              <ArrowUpRight size={22} aria-hidden="true" />
+            <Link to="/shop" className="tt-footer-shop">
+              Shop the edit
+              <ArrowUpRight size={18} strokeWidth={1.8} aria-hidden="true" />
             </Link>
-          </div>
+          </Reveal>
 
-          {/* REFERENCE BOARD */}
-          <div className="mt-14 bg-champagne text-navy shadow-[7px_9px_0_rgba(0,0,0,0.16)] sm:mt-20 lg:mt-24">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-navy/40 px-5 py-4 text-[10px] font-bold uppercase tracking-[0.14em] sm:px-7">
-              <span>Your reference sheet</span>
-              <span>01—05</span>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-6">
-              {referenceLinks.map((item, index) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`group flex min-h-28 min-w-0 flex-col justify-between gap-5 border-b border-navy/40 p-5 transition-colors hover:bg-navy hover:text-paper sm:p-7 ${
-                    index < 3 ? "lg:col-span-2" : "lg:col-span-3"
-                  } ${index % 2 === 0 ? "sm:border-r" : ""} ${
-                    index === 4 ? "sm:col-span-2 lg:col-span-3" : ""
-                  }`}
-                >
-                  <span className="text-xl font-medium leading-tight tracking-[-0.04em] sm:text-2xl">
-                    {item.name}
-                  </span>
-
-                  <span className="flex items-center justify-between gap-4">
-                    <span className="text-xs">{item.note}</span>
-                    <ArrowUpRight
-                      size={21}
-                      className="shrink-0 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* BUSINESS DETAILS AND LINKS */}
-          <div className="mt-14 grid gap-10 border-b border-paper/25 pb-10 md:grid-cols-2 lg:grid-cols-3">
-            <div className="min-w-0">
-              <Link
-                to="/"
-                className="text-2xl font-semibold tracking-[-0.05em]"
-              >
-                {storeInfo.businessName}
+          <div className="tt-footer-links">
+            <div className="tt-footer-brand">
+              <Link to="/" aria-label={`${storeInfo.businessName} home`}>
+                <BrandLogo />
               </Link>
 
-              <p className="mt-4 max-w-sm text-sm leading-7 text-paper/75">
-                Find your way to carry. Explore shapes for your daily
-                routines and the moments in between.
+              <p>
+                Find your way to carry. Explore shapes for your daily routines
+                and the moments in between.
               </p>
 
-              <Link
-                to="/shop"
-                className="mt-5 inline-flex min-h-11 items-center gap-4 text-sm font-semibold"
-              >
-                Explore the collection
-                <ArrowUpRight size={18} aria-hidden="true" />
-              </Link>
-            </div>
-
-            <div className="min-w-0">
-              <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-champagne">
-                Explore
-              </h3>
-
-              <nav
-                aria-label="Footer navigation"
-                className="flex flex-wrap gap-x-6 gap-y-1"
-              >
-                {navigation.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="inline-flex min-h-11 items-center text-sm text-paper/80 hover:text-white"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            <div className="min-w-0 md:col-span-2 lg:col-span-1">
-              <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-champagne">
-                Get in touch
-              </h3>
-
-              <div className="space-y-4 text-sm leading-6 text-paper/80">
+              {/* Contact details — all read from src/storeInfo.js */}
+              <div className="tt-footer-contact">
                 {storeInfo.email && (
-                  <a
-                    href={`mailto:${storeInfo.email}`}
-                    className="flex min-w-0 items-start gap-3 hover:text-white"
-                  >
-                    <Mail size={17} className="mt-1 shrink-0" />
-                    <span className="break-all">{storeInfo.email}</span>
+                  <a href={emailLink}>
+                    <Mail size={16} aria-hidden="true" />
+                    {storeInfo.email}
                   </a>
                 )}
 
                 {storeInfo.phoneDisplay && (
-                  <a
-                    href={`tel:${phoneHref}`}
-                    className="flex items-start gap-3 hover:text-white"
-                  >
-                    <Phone size={17} className="mt-1 shrink-0" />
-                    <span>{storeInfo.phoneDisplay}</span>
+                  <a href={phoneLink}>
+                    <Phone size={16} aria-hidden="true" />
+                    {storeInfo.phoneDisplay}
                   </a>
                 )}
 
-                {address && (
-                  <div className="flex items-start gap-3">
-                    <MapPin size={17} className="mt-1 shrink-0" />
-                    <p className="min-w-0 break-words">{address}</p>
+                {addressLines.length > 0 && (
+                  <div>
+                    <MapPin size={16} aria-hidden="true" />
+                    <span>
+                      {addressLines.map((line) => (
+                        <React.Fragment key={line}>
+                          {line}
+                          <br />
+                        </React.Fragment>
+                      ))}
+                    </span>
                   </div>
                 )}
 
-                {hours && (
-                  <div className="flex items-start gap-3">
-                    <Clock size={17} className="mt-1 shrink-0" />
-                    <p className="min-w-0 break-words">{hours}</p>
+                {(storeInfo.businessDays || hoursLine) && (
+                  <div>
+                    <Clock size={16} aria-hidden="true" />
+                    <span>
+                      {storeInfo.businessDays}
+                      {storeInfo.businessDays && hoursLine && <br />}
+                      {hoursLine}
+                    </span>
                   </div>
                 )}
 
-                <Link
-                  to="/contact"
-                  className="inline-flex min-h-11 items-center gap-3 font-semibold text-white"
-                >
+                <Link to="/contact">
+                  <ArrowUpRight size={16} aria-hidden="true" />
                   Contact support
-                  <ArrowUpRight size={17} aria-hidden="true" />
                 </Link>
               </div>
             </div>
+
+            {Object.entries(footerLinks).map(([title, links]) => (
+              <nav
+                key={title}
+                className="tt-footer-col"
+                aria-label={`${title} links`}
+              >
+                <h3>{title}</h3>
+
+                {links.map((item) => (
+                  <Link key={item.path} to={item.path}>
+                    {item.name}
+                  </Link>
+                ))}
+              </nav>
+            ))}
           </div>
 
-          <nav
-            aria-label="Additional customer policies"
-            className="flex flex-wrap gap-x-6 gap-y-1 border-b border-paper/25 py-5"
-          >
-            {extraLinks.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="inline-flex min-h-11 items-center text-xs text-paper/80 hover:text-white"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
+          <div className="tt-footer-bottom">
+            <span>
+              © {new Date().getFullYear()}{" "}
+              {storeInfo.legalName || storeInfo.businessName}. All rights
+              reserved.
+            </span>
 
-          <div className="flex flex-col gap-4 pt-6 text-xs text-paper/75 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-            <p>
-              © {new Date().getFullYear()} {storeInfo.businessName}.
-              All rights reserved.
-            </p>
-
-            <p>Thoughtfully carried, clearly explained.</p>
-
-            <button
-              type="button"
-              onClick={() =>
-                window.scrollTo({
-                  top: 0,
-                  behavior: window.matchMedia(
-                    "(prefers-reduced-motion: reduce)",
-                  ).matches
-                    ? "auto"
-                    : "smooth",
-                })
-              }
-              className="inline-flex min-h-11 items-center self-start font-semibold text-champagne"
-            >
-              Back to top ↑
+            <button type="button" onClick={scrollToTop}>
+              Back to top{" "}
+              <ArrowUp
+                size={12}
+                strokeWidth={2.4}
+                style={{ display: "inline", verticalAlign: "-1px" }}
+                aria-hidden="true"
+              />
             </button>
+
+            <span>{storeInfo.tagline}</span>
           </div>
         </div>
       </footer>

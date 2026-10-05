@@ -211,78 +211,82 @@ const Signup = () => {
     },
   ];
 
+  const brand = BUSINESS_INFO.businessName;
+
   return (
-    <main className="fbsignup">
-      <style>{styles}</style>
+    <div className="tt-site tt-auth">
+      {/* VISUAL SIDE */}
+      <aside className="tt-auth-visual">
+        <img src="/images/hero.webp" alt="" aria-hidden="true" />
 
-      <div className="fbsignup-wrap">
-        <nav className="fbsignup-top" aria-label="Account navigation">
-          <Link to="/" className="fbsignup-brand">
-            {BUSINESS_INFO.businessName}
-            <span aria-hidden="true">.</span>
-          </Link>
+        <Link to="/" className="tt-auth-logo" aria-label={`${brand} home`}>
+          <span className="tt-logo">
+            <span className="tt-logo-mark" aria-hidden="true">
+              ✳
+            </span>
+            {brand.toUpperCase()}
+            <span className="tt-logo-dot" aria-hidden="true">
+              .
+            </span>
+          </span>
+        </Link>
 
-          <Link to="/shop" className="fbsignup-back">
-            <ArrowLeft size={16} aria-hidden="true" />
-            Back to shopping
-          </Link>
-        </nav>
-
-        <header className="fbsignup-heading">
-          <p className="fbsignup-eyebrow">Your style starts here</p>
+        <div className="tt-auth-copy">
+          <p className="tt-eyebrow">
+            <span className="tt-eyebrow-dot" />
+            Your style starts here
+          </p>
 
           <h1>
-            A little more <span>you.</span>
+            A little more <em>you.</em>
           </h1>
 
           <p>
-            Create your {BUSINESS_INFO.businessName} account for a faster,
-            more convenient shopping experience.
+            Create your {brand} account for a faster, more convenient shopping
+            experience.
           </p>
-        </header>
+        </div>
+      </aside>
 
-        <section
-          className="fbsignup-registration"
-          aria-labelledby="fbsignup-form-title"
-        >
-          <div className="fbsignup-form-heading">
-            <div>
-              <span className="fbsignup-section-number" aria-hidden="true">
-                01
-              </span>
-              <h2 id="fbsignup-form-title">Create your account</h2>
-            </div>
+      {/* FORM SIDE */}
+      <main className="tt-auth-main">
+        <Link to="/shop" className="tt-cart-back tt-auth-back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to shopping
+        </Link>
 
-            <p>
-              Already registered? <Link to="/login">Sign in</Link>
-            </p>
-          </div>
+        <section className="tt-auth-panel" aria-labelledby="tt-signup-title">
+          <p className="tt-eyebrow tt-eyebrow--accent">
+            Already registered?{" "}
+            <Link to="/login" className="tt-inline-link">
+              Sign in
+            </Link>
+          </p>
+          <h2 id="tt-signup-title">Create your account</h2>
 
           {serverError && (
-            <div className="fbsignup-error-banner" role="alert">
-              {serverError}
+            <div className="tt-feedback is-error" role="alert">
+              <p>{serverError}</p>
             </div>
           )}
 
           {successMessage ? (
-            <div className="fbsignup-success">
-              <span className="fbsignup-success-icon" aria-hidden="true">
-                <Check size={25} />
+            <div className="tt-auth-success">
+              <span aria-hidden="true">
+                <Check size={26} />
               </span>
 
               <h3>You’re all set.</h3>
 
               <p role="status" aria-live="polite">
                 {successMessage}
-              </p>
-
-              <p className="fbsignup-redirect">
+                <br />
                 Taking you to sign in…
               </p>
 
-              <Link to="/login" className="fbsignup-submit">
+              <Link to="/login" className="tt-button tt-button--dark">
                 Continue to sign in
-                <ArrowUpRight size={19} aria-hidden="true" />
+                <ArrowUpRight size={18} aria-hidden="true" />
               </Link>
             </div>
           ) : (
@@ -292,105 +296,88 @@ const Signup = () => {
               noValidate
               aria-busy={isSubmitting}
             >
-              <fieldset
-                className="fbsignup-fieldset"
-                disabled={isSubmitting}
-              >
-                <legend className="fbsignup-sr-only">
-                  Registration details
-                </legend>
+              <fieldset disabled={isSubmitting}>
+                <legend className="sr-only">Registration details</legend>
 
-                <div className="fbsignup-fields">
-                  {fields.map((field) => (
-                    <div className="fbsignup-field" key={field.name}>
-                      <label htmlFor={`fbsignup-${field.name}`}>
-                        {field.label}
-                      </label>
+                {fields.map((field) => (
+                  <div
+                    className={`tt-field${errors[field.name] ? " has-error" : ""}`}
+                    key={field.name}
+                  >
+                    <label htmlFor={`tt-signup-${field.name}`}>
+                      <span>{field.label}</span>
+                    </label>
 
-                      <div
-                        className={`fbsignup-input-wrap ${
-                          errors[field.name] ? "has-error" : ""
-                        }`}
-                      >
-                        <input
-                          id={`fbsignup-${field.name}`}
-                          name={field.name}
-                          type={field.type}
-                          value={formData[field.name]}
-                          onChange={handleChange}
-                          autoComplete={field.autoComplete}
-                          placeholder={field.placeholder}
-                          required
-                          minLength={
-                            field.name === "name"
-                              ? 2
-                              : field.toggle
+                    <div className={field.toggle ? "tt-password" : undefined}>
+                      <input
+                        id={`tt-signup-${field.name}`}
+                        name={field.name}
+                        type={field.type}
+                        value={formData[field.name]}
+                        onChange={handleChange}
+                        autoComplete={field.autoComplete}
+                        placeholder={field.placeholder}
+                        required
+                        minLength={
+                          field.name === "name"
+                            ? 2
+                            : field.toggle
                               ? 6
                               : undefined
-                          }
-                          autoCapitalize={
-                            field.name === "email" || field.toggle
-                              ? "none"
-                              : "words"
-                          }
-                          spellCheck={field.name === "name"}
-                          aria-invalid={Boolean(errors[field.name])}
-                          aria-describedby={
-                            errors[field.name]
-                              ? `fbsignup-${field.name}-error`
-                              : field.name === "password"
-                              ? "fbsignup-password-hint"
+                        }
+                        autoCapitalize={
+                          field.name === "email" || field.toggle
+                            ? "none"
+                            : "words"
+                        }
+                        spellCheck={field.name === "name"}
+                        aria-invalid={Boolean(errors[field.name])}
+                        aria-describedby={
+                          errors[field.name]
+                            ? `tt-signup-${field.name}-error`
+                            : field.name === "password"
+                              ? "tt-signup-password-hint"
                               : undefined
-                          }
-                        />
+                        }
+                      />
 
-                        {field.toggle && (
-                          <button
-                            type="button"
-                            className="fbsignup-visibility"
-                            onClick={field.toggle}
-                            aria-label={`${
-                              field.visible ? "Hide" : "Show"
-                            } ${
-                              field.name === "confirmPassword"
-                                ? "confirm password"
-                                : "password"
-                            }`}
-                            aria-pressed={field.visible}
-                            aria-controls={`fbsignup-${field.name}`}
-                          >
-                            {field.visible ? (
-                              <EyeOff size={18} aria-hidden="true" />
-                            ) : (
-                              <Eye size={18} aria-hidden="true" />
-                            )}
-                          </button>
-                        )}
-                      </div>
-
-                      {errors[field.name] ? (
-                        <p
-                          id={`fbsignup-${field.name}-error`}
-                          className="fbsignup-field-error"
+                      {field.toggle && (
+                        <button
+                          type="button"
+                          onClick={field.toggle}
+                          aria-label={`${field.visible ? "Hide" : "Show"} ${
+                            field.name === "confirmPassword"
+                              ? "confirm password"
+                              : "password"
+                          }`}
+                          aria-pressed={field.visible}
+                          aria-controls={`tt-signup-${field.name}`}
                         >
-                          {errors[field.name]}
-                        </p>
-                      ) : field.name === "password" ? (
-                        <p
-                          id="fbsignup-password-hint"
-                          className="fbsignup-field-hint"
-                        >
-                          Use at least 6 characters.
-                        </p>
-                      ) : null}
+                          {field.visible ? (
+                            <EyeOff size={18} aria-hidden="true" />
+                          ) : (
+                            <Eye size={18} aria-hidden="true" />
+                          )}
+                        </button>
+                      )}
                     </div>
-                  ))}
-                </div>
 
-                <div className="fbsignup-consent">
-                  <div className="fbsignup-consent-row">
+                    {errors[field.name] ? (
+                      <em id={`tt-signup-${field.name}-error`}>
+                        {errors[field.name]}
+                      </em>
+                    ) : field.name === "password" ? (
+                      <small id="tt-signup-password-hint">
+                        Use at least 6 characters.
+                      </small>
+                    ) : null}
+                  </div>
+                ))}
+
+                <div>
+                  <div className="tt-check">
                     <input
-                      id="fbsignup-terms"
+                      id="tt-signup-terms"
                       name="terms"
                       type="checkbox"
                       checked={formData.terms}
@@ -398,77 +385,72 @@ const Signup = () => {
                       required
                       aria-invalid={Boolean(errors.terms)}
                       aria-describedby={
-                        errors.terms ? "fbsignup-terms-error" : undefined
+                        errors.terms ? "tt-signup-terms-error" : undefined
                       }
                     />
 
                     <div>
-                      <label htmlFor="fbsignup-terms">
-                        I agree to the
-                      </label>{" "}
+                      <label htmlFor="tt-signup-terms">I agree to the</label>{" "}
                       <Link to="/terms-and-conditions">
                         Terms &amp; Conditions
                       </Link>{" "}
-                      and{" "}
-                      <Link to="/privacy-policy">Privacy Policy</Link>.
+                      and <Link to="/privacy-policy">Privacy Policy</Link>.
                     </div>
                   </div>
 
                   {errors.terms && (
-                    <p
-                      id="fbsignup-terms-error"
-                      className="fbsignup-field-error"
-                    >
+                    <p id="tt-signup-terms-error" className="tt-check-error">
                       {errors.terms}
                     </p>
                   )}
                 </div>
 
-                <div className="fbsignup-form-bottom">
-                  <p>
-                    Your account, ready for your next favourite.
-                  </p>
+                <button
+                  type="submit"
+                  className="tt-button tt-button--dark tt-auth-submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      Creating account…
+                      <Loader2
+                        size={18}
+                        className="tt-spinner"
+                        aria-hidden="true"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      Create account
+                      <ArrowUpRight size={18} aria-hidden="true" />
+                    </>
+                  )}
+                </button>
 
-                  <button
-                    type="submit"
-                    className="fbsignup-submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        Creating account…
-                        <Loader2
-                          size={18}
-                          className="fbsignup-spin"
-                          aria-hidden="true"
-                        />
-                      </>
-                    ) : (
-                      <>
-                        Create account
-                        <ArrowUpRight size={19} aria-hidden="true" />
-                      </>
-                    )}
-                  </button>
-                </div>
+                <p className="tt-auth-note">
+                  Your account, ready for your next favourite.
+                </p>
               </fieldset>
             </form>
           )}
+
+          <div className="tt-auth-switch">
+            <div>
+              <p className="tt-eyebrow tt-eyebrow--accent">
+                Already part of {brand}?
+              </p>
+            </div>
+
+            <Link to="/login" className="tt-text-arrow">
+              Sign in to your account
+              <ArrowUpRight size={17} aria-hidden="true" />
+            </Link>
+          </div>
         </section>
 
-        <div className="fbsignup-login-note">
-          <span>Already part of {BUSINESS_INFO.businessName}?</span>
-
-          <Link to="/login">
-            Sign in to your account
-            <ArrowUpRight size={17} aria-hidden="true" />
-          </Link>
-        </div>
-
-        <footer className="fbsignup-footer">
+        <footer className="tt-auth-footer">
           <span>
-            © {new Date().getFullYear()} {BUSINESS_INFO.businessName}.
-            All rights reserved.
+            © {new Date().getFullYear()} {brand}. All rights reserved.
           </span>
 
           <div>
@@ -476,607 +458,9 @@ const Signup = () => {
             <Link to="/terms-and-conditions">Terms</Link>
           </div>
         </footer>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 };
-
-const styles = `
-  .fbsignup {
-    --ink: #173f36;
-    --deep: #102e28;
-    --paper: #fffdf5;
-    --bone: #f5f0e6;
-    --brass: #a56e4f;
-    --muted: #626e67;
-    --line: rgba(23, 63, 54, .17);
-    --error: #a13832;
-
-    min-height: 100vh;
-    background: var(--bone);
-    color: var(--ink);
-    font-family: 'Onest', ui-sans-serif, system-ui, sans-serif;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .fbsignup *,
-  .fbsignup *::before,
-  .fbsignup *::after {
-    box-sizing: border-box;
-  }
-
-  .fbsignup a {
-    color: inherit;
-    text-decoration: none;
-    text-underline-offset: 4px;
-  }
-
-  .fbsignup button,
-  .fbsignup input {
-    font: inherit;
-  }
-
-  .fbsignup button {
-    cursor: pointer;
-  }
-
-  .fbsignup button:disabled {
-    cursor: not-allowed;
-  }
-
-  .fbsignup a:focus-visible,
-  .fbsignup button:focus-visible,
-  .fbsignup input:focus-visible {
-    outline: 2px solid var(--brass);
-    outline-offset: 4px;
-  }
-
-  .fbsignup-wrap {
-    width: min(100%, 1180px);
-    margin-inline: auto;
-    padding-inline: clamp(20px, 5vw, 64px);
-  }
-
-  .fbsignup-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    min-height: 88px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fbsignup-brand {
-    font-size: 24px;
-    font-weight: 600;
-    letter-spacing: -.055em;
-    overflow-wrap: anywhere;
-  }
-
-  .fbsignup-brand > span {
-    color: var(--brass);
-  }
-
-  .fbsignup-back {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 10px;
-    min-height: 44px;
-    font-size: 11px;
-  }
-
-  .fbsignup-heading {
-    max-width: 680px;
-    margin-inline: auto;
-    padding-block: 52px 38px;
-    text-align: center;
-    animation: fbsignupEnter .45s ease both;
-  }
-
-  .fbsignup-eyebrow {
-    margin: 0;
-    color: var(--brass);
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .14em;
-  }
-
-  .fbsignup-heading h1 {
-    margin: 20px 0 18px;
-    font-size: clamp(42px, 6vw, 66px);
-    font-weight: 500;
-    line-height: 1.12;
-    letter-spacing: -.06em;
-  }
-
-  .fbsignup-heading h1 > span {
-    color: var(--brass);
-  }
-
-  .fbsignup-heading > p:last-child {
-    max-width: 460px;
-    margin-inline: auto;
-    margin-bottom: 0;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.9;
-  }
-
-  .fbsignup-registration {
-    max-width: 820px;
-    margin-inline: auto;
-    padding: clamp(24px, 4vw, 42px);
-    border: 1px solid var(--line);
-    background: var(--paper);
-    animation: fbsignupEnter .55s ease both;
-  }
-
-  .fbsignup-form-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    padding-bottom: 26px;
-    margin-bottom: 28px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fbsignup-form-heading > div {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-  }
-
-  .fbsignup-section-number {
-    color: var(--brass);
-    font-size: 10px;
-  }
-
-  .fbsignup-form-heading h2 {
-    margin: 0;
-    font-size: 21px;
-    font-weight: 500;
-    line-height: 1.3;
-    letter-spacing: -.035em;
-  }
-
-  .fbsignup-form-heading > p {
-    flex-shrink: 0;
-    margin: 0;
-    color: var(--muted);
-    font-size: 11px;
-  }
-
-  .fbsignup-form-heading a {
-    margin-left: 5px;
-    color: var(--ink);
-    font-weight: 600;
-    text-decoration: underline;
-  }
-
-  .fbsignup-fieldset {
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-
-  .fbsignup-fields {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-  }
-
-  .fbsignup-field {
-    min-width: 0;
-  }
-
-  .fbsignup-field > label {
-    display: block;
-    margin-bottom: 9px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .fbsignup-input-wrap {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    border: 1px solid var(--line);
-    background: #fff;
-    transition:
-      border-color .2s ease,
-      box-shadow .2s ease;
-  }
-
-  .fbsignup-input-wrap:focus-within {
-    border-color: var(--ink);
-    box-shadow: 0 0 0 3px rgba(23, 63, 54, .05);
-  }
-
-  .fbsignup-input-wrap.has-error {
-    border-color: var(--error);
-  }
-
-  .fbsignup-input-wrap input {
-    width: 100%;
-    min-width: 0;
-    min-height: 54px;
-    padding: 14px 15px;
-    border: 0;
-    background: transparent;
-    color: var(--ink);
-    font-size: 16px;
-  }
-
-  .fbsignup-input-wrap input::placeholder {
-    color: #7a817b;
-    font-size: 12px;
-  }
-
-  .fbsignup-visibility {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    margin-right: 4px;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-  }
-
-  .fbsignup-visibility:hover {
-    color: var(--ink);
-  }
-
-  .fbsignup-field-hint,
-  .fbsignup-field-error {
-    margin: 8px 0 0;
-    font-size: 11px;
-    line-height: 1.6;
-  }
-
-  .fbsignup-field-hint {
-    color: var(--muted);
-  }
-
-  .fbsignup-field-error {
-    color: var(--error);
-  }
-
-  .fbsignup-consent {
-    margin-top: 28px;
-  }
-
-  .fbsignup-consent-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .fbsignup-consent-row > input {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    margin: 3px 0 0;
-    accent-color: var(--ink);
-    cursor: pointer;
-  }
-
-  .fbsignup-consent-row > div {
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.9;
-  }
-
-  .fbsignup-consent label {
-    cursor: pointer;
-  }
-
-  .fbsignup-consent a {
-    color: var(--ink);
-    font-weight: 500;
-    text-decoration: underline;
-  }
-
-  .fbsignup-form-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    margin-top: 28px;
-    padding-top: 26px;
-    border-top: 1px solid var(--line);
-  }
-
-  .fbsignup-form-bottom > p {
-    max-width: 230px;
-    margin: 0;
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.8;
-  }
-
-  .fbsignup-submit {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-    gap: 35px;
-    min-width: 220px;
-    min-height: 54px;
-    padding: 15px 20px;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #fff !important;
-    font-size: 12px;
-    font-weight: 500;
-    transition: background .2s ease;
-  }
-
-  .fbsignup-submit:hover:not(:disabled) {
-    background: var(--deep);
-  }
-
-  .fbsignup-submit:disabled {
-    opacity: .65;
-  }
-
-  .fbsignup-submit > svg {
-    flex-shrink: 0;
-  }
-
-  .fbsignup-error-banner {
-    margin-bottom: 24px;
-    padding: 14px 16px;
-    border: 1px solid rgba(161, 56, 50, .25);
-    background: #fbefec;
-    color: var(--error);
-    font-size: 12px;
-    line-height: 1.8;
-    overflow-wrap: anywhere;
-  }
-
-  .fbsignup-success {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    padding: 20px 0 10px;
-    text-align: center;
-  }
-
-  .fbsignup-success-icon {
-    display: grid;
-    place-items: center;
-    width: 58px;
-    height: 58px;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    background: var(--bone);
-  }
-
-  .fbsignup-success h3 {
-    margin: 20px 0 10px;
-    font-size: 30px;
-    font-weight: 500;
-    letter-spacing: -.045em;
-  }
-
-  .fbsignup-success > p {
-    max-width: 420px;
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-  }
-
-  .fbsignup-success .fbsignup-redirect {
-    margin-top: 12px;
-    font-size: 11px;
-  }
-
-  .fbsignup-success .fbsignup-submit {
-    margin-top: 24px;
-  }
-
-  .fbsignup-login-note {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    max-width: 820px;
-    margin-inline: auto;
-    padding-block: 22px 34px;
-    color: var(--muted);
-    font-size: 11px;
-  }
-
-  .fbsignup-login-note > a {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 44px;
-    color: var(--ink);
-    font-weight: 500;
-  }
-
-  .fbsignup-login-note > a:hover {
-    text-decoration: underline;
-  }
-
-  .fbsignup-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 15px 25px;
-    padding-block: 22px 32px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fbsignup-footer > div {
-    display: flex;
-    gap: 24px;
-  }
-
-  .fbsignup-footer a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-
-  .fbsignup-footer a:hover {
-    text-decoration: underline;
-  }
-
-  .fbsignup-sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .fbsignup-spin {
-    animation: fbsignupSpin 1s linear infinite;
-  }
-
-  @keyframes fbsignupSpin {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes fbsignupEnter {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (max-width: 760px) {
-    .fbsignup-form-heading {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .fbsignup-form-heading > p {
-      flex-shrink: 1;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .fbsignup-top {
-      min-height: 76px;
-      gap: 15px;
-    }
-
-    .fbsignup-brand {
-      font-size: 21px;
-    }
-
-    .fbsignup-back {
-      gap: 7px;
-      font-size: 10px;
-    }
-
-    .fbsignup-heading {
-      padding-block: 36px 28px;
-      text-align: left;
-    }
-
-    .fbsignup-heading h1 {
-      font-size: 44px;
-    }
-
-    .fbsignup-heading > p:last-child {
-      margin-inline: 0;
-    }
-
-    .fbsignup-registration {
-      padding: 26px 22px;
-    }
-
-    .fbsignup-form-heading {
-      margin-bottom: 24px;
-      padding-bottom: 22px;
-    }
-
-    .fbsignup-fields {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 20px;
-    }
-
-    .fbsignup-form-bottom {
-      align-items: stretch;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .fbsignup-form-bottom > p {
-      max-width: none;
-    }
-
-    .fbsignup-submit {
-      width: 100%;
-      min-width: 0;
-    }
-
-    .fbsignup-login-note {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 4px;
-      padding-block: 20px 28px;
-    }
-
-    .fbsignup-footer {
-      padding-block: 18px 24px;
-    }
-  }
-
-  @media (max-width: 380px) {
-    .fbsignup-brand {
-      font-size: 19px;
-    }
-
-    .fbsignup-back {
-      font-size: 9px;
-    }
-
-    .fbsignup-heading h1 {
-      font-size: 38px;
-    }
-
-    .fbsignup-registration {
-      padding: 24px 18px;
-    }
-
-    .fbsignup-form-heading h2 {
-      font-size: 19px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fbsignup *,
-    .fbsignup *::before,
-    .fbsignup *::after {
-      animation: none !important;
-      transition: none !important;
-    }
-  }
-`;
 
 export default Signup;

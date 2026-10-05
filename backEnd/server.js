@@ -27,9 +27,8 @@ const frontendOrigins = (process.env.FRONTEND_URL || "")
 const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://localhost:3000",
-  "https://fablebelle.com",
-  "https://www.fablebelle.com",
-  "https://fable-belle-front-end.onrender.com",
+  "https://totestry.com",
+  "https://www.totestry.com",
   ...frontendOrigins,
 ]);
 
@@ -129,14 +128,14 @@ app.use("/api/orders", orderRoutes);
 app.get("/", (req, res) => {
   return res.json({
     success: true,
-    message: "Fable Belle backend is running",
+    message: "Totestry backend is running",
   });
 });
 
 app.get("/api/health", (req, res) => {
   return res.json({
     success: true,
-    message: "Fable Belle API is running",
+    message: "Totestry API is running",
   });
 });
 
@@ -173,5 +172,5 @@ app.use((error, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Fable Belle backend running on port ${PORT}`);
+  console.log(`Totestry backend running on port ${PORT}`);
 });

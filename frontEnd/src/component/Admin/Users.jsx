@@ -57,7 +57,7 @@ const formatMoney = (value) =>
 
 const isCancelled = (order) =>
   ["cancelled", "canceled"].includes(
-    getText(order?.status).trim().toLowerCase()
+    getText(order?.status).trim().toLowerCase(),
   );
 
 const getRole = (user) => {
@@ -79,517 +79,28 @@ const getInitials = (name) =>
     .join("")
     .toUpperCase() || "?";
 
-const styles = `
-  .fbusers {
-    --forest: #173f36;
-    --deep: #102e28;
-    --pistachio: #d7e5a5;
-    --bone: #f5f0e6;
-    --paper: #fffdf5;
-    --brass: #a56e4f;
-    --muted: #68776f;
-    --line: #dde1d5;
-    min-height: 100vh;
-    padding: 36px 24px 64px;
-    background: var(--bone);
-    color: var(--deep);
-    font-family: "Onest", Arial, sans-serif;
-  }
+// Shared Tailwind class sets
+const eyebrow =
+  "text-[10px] font-extrabold uppercase tracking-[0.16em] text-mauve";
+const pillControl =
+  "h-12 w-full rounded-full border border-line bg-white px-4 text-sm text-ink transition-all duration-200 focus:border-mauve focus:outline-none focus:ring-4 focus:ring-mauve/15";
+const secondaryButton =
+  "inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full border border-line bg-white px-5 text-xs font-extrabold transition-all duration-200 hover:-translate-y-0.5 hover:border-mauve hover:shadow-md disabled:translate-y-0 disabled:cursor-wait disabled:opacity-55 disabled:shadow-none";
 
-  .fbusers *, .fbusers *::before, .fbusers *::after {
-    box-sizing: border-box;
-  }
-
-  .fbusers button, .fbusers input, .fbusers select {
-    font: inherit;
-  }
-
-  .fbusers button { cursor: pointer; }
-  .fbusers button:disabled { cursor: wait; opacity: .55; }
-  .fbusers button, .fbusers a, .fbusers input, .fbusers select {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .fbusers :focus-visible {
-    outline: 3px solid var(--brass);
-    outline-offset: 4px;
-  }
-
-  .fbusers-shell { max-width: 1440px; margin: auto; }
-  .fbusers-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 24px;
-    margin-bottom: 28px;
-  }
-
-  .fbusers-eyebrow {
-    margin: 0 0 12px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: var(--brass);
-  }
-
-  .fbusers h1 {
-    margin: 0;
-    font-size: clamp(32px, 4vw, 52px);
-    line-height: 1.08;
-    letter-spacing: -.055em;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-subtitle {
-    margin: 13px 0 0;
-    max-width: 530px;
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.7;
-  }
-
-  .fbusers-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    min-height: 44px;
-    padding: 12px 18px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--paper);
-    color: var(--forest);
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background .2s, transform .2s;
-  }
-
-  .fbusers-button:hover:not(:disabled) {
-    background: var(--pistachio);
-    transform: translateY(-2px);
-  }
-
-  .fbusers-overview {
-    display: grid;
-    grid-template-columns: 1.3fr repeat(3, 1fr);
-    padding: 26px 12px;
-    margin-bottom: 28px;
-    border-radius: 16px;
-    background: var(--forest);
-    color: var(--paper);
-  }
-
-  .fbusers-stat {
-    min-width: 0;
-    padding: 0 24px;
-    border-right: 1px solid #ffffff24;
-  }
-
-  .fbusers-stat:last-child { border: 0; }
-  .fbusers-stat small {
-    display: block;
-    color: #e0e7d2;
-    font-size: 11px;
-    line-height: 1.5;
-  }
-
-  .fbusers-stat strong {
-    display: block;
-    margin-top: 9px;
-    font-size: clamp(22px, 2.5vw, 32px);
-    letter-spacing: -.04em;
-    font-weight: 500;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-stat:first-child strong { color: var(--pistachio); }
-  .fbusers-controls {
-    display: grid;
-    grid-template-columns: minmax(220px, 1fr) auto;
-    gap: 16px;
-    align-items: center;
-  }
-
-  .fbusers-search { position: relative; }
-  .fbusers-search svg {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    pointer-events: none;
-  }
-
-  .fbusers-search input, .fbusers-sort select {
-    width: 100%;
-    min-height: 48px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--paper);
-    color: var(--deep);
-    font-size: 13px;
-  }
-
-  .fbusers-search input { padding: 13px 16px 13px 45px; }
-  .fbusers-sort {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .fbusers-sort select { padding: 12px; width: 190px; }
-  .fbusers-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 20px 0;
-  }
-
-  .fbusers-tab {
-    min-height: 42px;
-    padding: 9px 16px;
-    border: 1px solid var(--line);
-    border-radius: 30px;
-    background: transparent;
-    color: var(--muted);
-    font-size: 12px;
-    transition: background .2s, color .2s;
-  }
-
-  .fbusers-tab[aria-pressed="true"] {
-    color: var(--paper);
-    background: var(--forest);
-    border-color: var(--forest);
-  }
-
-  .fbusers-results {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin: 0 0 18px;
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .fbusers-reset {
-    border: 0;
-    padding: 8px 0;
-    background: transparent;
-    color: var(--forest);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
-
-  .fbusers-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-  }
-
-  .fbusers-card {
-    min-width: 0;
-    padding: 24px;
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: var(--paper);
-    animation: fbusers-enter .35s ease both;
-    transition: transform .2s, box-shadow .2s;
-  }
-
-  .fbusers-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 14px 30px #102e280a;
-  }
-
-  .fbusers-card-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .fbusers-avatar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 54px;
-    height: 54px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background: var(--bone);
-    color: var(--forest);
-    font-size: 17px;
-    font-weight: 600;
-  }
-
-  .fbusers-role {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 7px 10px;
-    border-radius: 30px;
-    background: var(--bone);
-    color: var(--forest);
-    font-size: 10px;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-role-admin { background: var(--pistachio); }
-  .fbusers-card h2 {
-    margin: 20px 0 6px;
-    font-size: 19px;
-    letter-spacing: -.03em;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-email {
-    margin: 0;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-card-metrics {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 15px;
-    margin: 22px 0;
-    padding: 18px 0;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fbusers-card-metrics small, .fbusers-field dt {
-    display: block;
-    color: var(--muted);
-    font-size: 10px;
-    line-height: 1.5;
-  }
-
-  .fbusers-card-metrics strong {
-    display: block;
-    margin-top: 6px;
-    font-size: 18px;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-card-footer {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .fbusers-card-footer span { color: var(--muted); font-size: 10px; }
-  .fbusers-open {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 44px;
-    padding: 8px 0 8px 8px;
-    border: 0;
-    background: transparent;
-    color: var(--forest);
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  .fbusers-alert {
-    margin-bottom: 22px;
-    padding: 16px 18px;
-    border: 1px solid #d7b8a6;
-    border-radius: 10px;
-    background: #fff4ec;
-    color: #7c3e23;
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  .fbusers-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 260px;
-    padding: 35px 20px;
-    text-align: center;
-    border: 1px dashed var(--line);
-    border-radius: 16px;
-    background: var(--paper);
-    color: var(--muted);
-  }
-
-  .fbusers-empty h2 { color: var(--deep); font-size: 20px; }
-  .fbusers-empty p { font-size: 13px; line-height: 1.7; }
-  .fbusers-back { margin-bottom: 24px; }
-  .fbusers-profile {
-    display: grid;
-    grid-template-columns: minmax(250px, .85fr) minmax(0, 1.7fr);
-    gap: 24px;
-    align-items: start;
-    animation: fbusers-enter .3s ease both;
-  }
-
-  .fbusers-identity {
-    padding: 30px;
-    border-radius: 16px;
-    background: var(--forest);
-    color: var(--paper);
-  }
-
-  .fbusers-identity .fbusers-avatar {
-    width: 78px;
-    height: 78px;
-    font-size: 26px;
-    background: var(--pistachio);
-  }
-
-  .fbusers-identity h2 {
-    margin: 24px 0 8px;
-    font-size: 28px;
-    line-height: 1.2;
-    font-weight: 500;
-    letter-spacing: -.04em;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-identity .fbusers-email { color: #e0e7d2; }
-  .fbusers-identity .fbusers-role { margin-top: 18px; }
-  .fbusers-fields { margin: 30px 0 0; }
-  .fbusers-field { padding: 17px 0; border-top: 1px solid #ffffff24; }
-  .fbusers-field dt { color: #d0dccf; }
-  .fbusers-field dd {
-    margin: 7px 0 0;
-    font-size: 13px;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-field dt {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .fbusers-panel {
-    min-width: 0;
-    padding: 28px;
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: var(--paper);
-  }
-
-  .fbusers-panel h2 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -.03em;
-  }
-
-  .fbusers-activity {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding-bottom: 25px;
-    margin-bottom: 26px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fbusers-activity small { color: var(--muted); font-size: 11px; }
-  .fbusers-activity strong {
-    display: block;
-    margin-top: 9px;
-    font-size: clamp(24px, 3vw, 34px);
-    font-weight: 500;
-    letter-spacing: -.04em;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-note { color: var(--muted); font-size: 11px; line-height: 1.7; }
-  .fbusers-history { margin-top: 20px; }
-  .fbusers-order {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 16px;
-    padding: 18px 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .fbusers-order strong {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-
-  .fbusers-order small {
-    display: block;
-    margin-top: 7px;
-    color: var(--muted);
-    font-size: 11px;
-  }
-
-  .fbusers-order-value { text-align: right; }
-  .fbusers-spin { animation: fbusers-spin 1s linear infinite; }
-  @keyframes fbusers-spin { to { transform: rotate(360deg); } }
-  @keyframes fbusers-enter {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @media (max-width: 1100px) {
-    .fbusers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .fbusers-stat { padding: 0 16px; }
-  }
-
-  @media (max-width: 760px) {
-    .fbusers { padding: 24px 16px 44px; }
-    .fbusers-header { align-items: flex-start; }
-    .fbusers-overview {
-      grid-template-columns: 1fr 1fr;
-      padding: 8px 18px;
-    }
-    .fbusers-stat { padding: 18px 12px; }
-    .fbusers-stat:nth-child(2) { border-right: 0; }
-    .fbusers-stat:nth-child(-n+2) { border-bottom: 1px solid #ffffff24; }
-    .fbusers-controls { grid-template-columns: 1fr; }
-    .fbusers-sort { justify-content: space-between; }
-    .fbusers-sort select { width: min(75%, 260px); }
-    .fbusers-profile { grid-template-columns: 1fr; }
-    .fbusers-identity, .fbusers-panel { padding: 24px; }
-  }
-
-  @media (max-width: 480px) {
-    .fbusers-header { flex-direction: column; gap: 18px; }
-    .fbusers-grid { grid-template-columns: 1fr; }
-    .fbusers-card { padding: 22px; }
-    .fbusers-overview { padding: 6px; }
-    .fbusers-stat { padding: 17px 12px; }
-    .fbusers-activity { gap: 12px; }
-    .fbusers-identity, .fbusers-panel { padding: 20px; }
-    .fbusers-results { align-items: flex-start; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fbusers *, .fbusers *::before, .fbusers *::after {
-      animation: none !important;
-      transition: none !important;
-      scroll-behavior: auto !important;
-    }
-  }
-`;
+const RoleBadge = ({ role, light = false }) => (
+  <span
+    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider ${
+      role === "Admin"
+        ? "bg-plum text-white"
+        : light
+          ? "bg-white/15 text-white"
+          : "bg-lilac text-plum"
+    }`}
+  >
+    {role === "Admin" && <ShieldCheck size={12} aria-hidden="true" />}
+    {role}
+  </span>
+);
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -619,7 +130,7 @@ const Users = () => {
       setErrorMessage("");
 
       try {
-        const token = localStorage.getItem("fablebelle-token");
+        const token = localStorage.getItem(storeInfo.storageKeys.token);
 
         if (!token) {
           throw new Error("Please sign in with your admin account.");
@@ -637,7 +148,7 @@ const Users = () => {
 
           if (!response.ok) {
             throw new Error(
-              data?.message || `Unable to load ${label}. Please try again.`
+              data?.message || `Unable to load ${label}. Please try again.`,
             );
           }
 
@@ -646,8 +157,7 @@ const Users = () => {
           }
 
           return data[field].filter(
-            (item) =>
-              item && typeof item === "object" && !Array.isArray(item)
+            (item) => item && typeof item === "object" && !Array.isArray(item),
           );
         };
 
@@ -695,7 +205,7 @@ const Users = () => {
 
     return users.map((user) => {
       const userOrders = [...(activity.get(getId(user)) || [])].sort(
-        (a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt)
+        (a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt),
       );
 
       return {
@@ -707,7 +217,7 @@ const Users = () => {
         orderValue: userOrders.reduce(
           (total, order) =>
             total + (isCancelled(order) ? 0 : getAmount(order.totalAmount)),
-          0
+          0,
         ),
       };
     });
@@ -718,11 +228,11 @@ const Users = () => {
       "All",
       "Customer",
       "Admin",
-      ...Array.from(new Set(userDirectory.map((user) => user.roleLabel))).filter(
-        (role) => role !== "Customer" && role !== "Admin"
-      ),
+      ...Array.from(
+        new Set(userDirectory.map((user) => user.roleLabel)),
+      ).filter((role) => role !== "Customer" && role !== "Admin"),
     ],
-    [userDirectory]
+    [userDirectory],
   );
 
   const filteredUsers = useMemo(() => {
@@ -731,75 +241,62 @@ const Users = () => {
     const result = userDirectory.filter((user) => {
       const matchesSearch =
         !search ||
-        getText(user.name).toLowerCase().includes(search) ||
-        getText(user.email).toLowerCase().includes(search);
+        [getText(user.name), getText(user.email)]
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
 
       return (
-        matchesSearch &&
-        (roleFilter === "All" || user.roleLabel === roleFilter)
+        matchesSearch && (roleFilter === "All" || user.roleLabel === roleFilter)
       );
     });
 
-    result.sort((a, b) => {
-      if (sortBy === "Highest Value") return b.orderValue - a.orderValue;
-      if (sortBy === "Most Orders") return b.orderCount - a.orderCount;
-      if (sortBy === "A-Z") {
+    return result.sort((a, b) => {
+      if (sortBy === "Oldest") {
+        return getTimestamp(a.createdAt) - getTimestamp(b.createdAt);
+      }
+
+      if (sortBy === "Name") {
         return getText(a.name).localeCompare(getText(b.name));
       }
 
+      if (sortBy === "Orders") return b.orderCount - a.orderCount;
+      if (sortBy === "Value") return b.orderValue - a.orderValue;
+
       return getTimestamp(b.createdAt) - getTimestamp(a.createdAt);
     });
-
-    return result;
   }, [userDirectory, searchTerm, roleFilter, sortBy]);
 
-  const selectedUser = useMemo(
-    () => userDirectory.find((user) => user.accountId === selectedId),
-    [userDirectory, selectedId]
+  const selectedUser = userDirectory.find(
+    (user) => user.accountId === selectedId,
   );
 
-  useEffect(() => {
-    if (hasLoaded && selectedId && !selectedUser) setSelectedId("");
-  }, [hasLoaded, selectedId, selectedUser]);
+  const summary = useMemo(() => {
+    const customers = userDirectory.filter(
+      (user) => user.roleLabel !== "Admin",
+    );
 
+    return {
+      total: userDirectory.length,
+      customers: customers.length,
+      admins: userDirectory.length - customers.length,
+      withOrders: userDirectory.filter((user) => user.orderCount > 0).length,
+    };
+  }, [userDirectory]);
+
+  // Move focus to the heading of whichever view has just opened
   useEffect(() => {
-    const previousId = previousSelectionRef.current;
+    if (selectedId) {
+      profileHeadingRef.current?.focus();
+    } else if (previousSelectionRef.current) {
+      directoryHeadingRef.current?.focus();
+    }
+
     previousSelectionRef.current = selectedId;
-
-    if (!selectedId && !previousId) return;
-
-    const frame = requestAnimationFrame(() => {
-      const heading = selectedId
-        ? profileHeadingRef.current
-        : directoryHeadingRef.current;
-
-      heading?.focus({ preventScroll: true });
-      heading?.scrollIntoView({ block: "start", behavior: "auto" });
-    });
-
-    return () => cancelAnimationFrame(frame);
   }, [selectedId]);
 
-  const totalOrderValue = useMemo(
-    () =>
-      orders.reduce(
-        (total, order) =>
-          total + (isCancelled(order) ? 0 : getAmount(order.totalAmount)),
-        0
-      ),
-    [orders]
-  );
-
-  const customerCount = userDirectory.filter(
-    (user) => user.roleLabel === "Customer"
-  ).length;
-
-  const adminCount = userDirectory.filter(
-    (user) => user.roleLabel === "Admin"
-  ).length;
-
-  const filtersActive =
-    searchTerm.trim() || roleFilter !== "All" || sortBy !== "Newest";
+  const hasFilters =
+    Boolean(searchTerm) || roleFilter !== "All" || sortBy !== "Newest";
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -810,376 +307,443 @@ const Users = () => {
   const refreshButton = (
     <button
       type="button"
-      className="fbusers-button"
-      disabled={loading}
+      className={secondaryButton}
       onClick={() => setRefreshCount((count) => count + 1)}
+      disabled={loading}
     >
       <RefreshCw
-        size={15}
+        size={16}
+        className={loading ? "animate-spin" : ""}
         aria-hidden="true"
-        className={loading ? "fbusers-spin" : ""}
       />
-      {loading ? "Refreshing…" : "Refresh"}
+      {loading ? "Loading…" : "Refresh"}
     </button>
   );
 
-  return (
-    <section className="fbusers">
-      <style>{styles}</style>
+  const errorBanner = errorMessage && (
+    <div
+      className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+      role="alert"
+    >
+      {errorMessage}
+      {hasLoaded && (
+        <p className="mt-1 font-normal">
+          The list shows the last successfully loaded data.
+        </p>
+      )}
+    </div>
+  );
 
-      <div className="fbusers-shell">
-        {selectedUser ? (
-          <>
-            <button
-              type="button"
-              className="fbusers-button fbusers-back"
-              onClick={() => setSelectedId("")}
+  /* ================= ONE ACCOUNT ================= */
+
+  if (selectedId) {
+    return (
+      <div>
+        <button
+          type="button"
+          className={`mb-6 ${secondaryButton}`}
+          onClick={() => setSelectedId("")}
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to accounts
+        </button>
+
+        {errorBanner}
+
+        {!selectedUser ? (
+          <div className="rounded-3xl border border-dashed border-line bg-white p-10 text-center text-sm text-ink/60">
+            <h2
+              ref={profileHeadingRef}
+              tabIndex={-1}
+              className="font-display text-3xl tracking-tight text-ink focus:outline-none"
             >
-              <ArrowLeft size={16} aria-hidden="true" />
-              Back to directory
-            </button>
-
-            <header className="fbusers-header">
-              <div>
-                <p className="fbusers-eyebrow">
-                  {brandName} / Account profile
-                </p>
-                <h1 ref={profileHeadingRef} tabIndex={-1}>
-                  Account overview
-                </h1>
-                <p className="fbusers-subtitle">
-                  Registration details and linked order activity.
-                </p>
-              </div>
-
-              {refreshButton}
-            </header>
-          </>
-        ) : (
-          <header className="fbusers-header">
-            <div>
-              <p className="fbusers-eyebrow">
-                {brandName} / Administration
-              </p>
-              <h1 ref={directoryHeadingRef} tabIndex={-1}>
-                People & accounts
-              </h1>
-              <p className="fbusers-subtitle">
-                Explore registered accounts and their activity across the store.
-              </p>
-            </div>
-
-            {refreshButton}
-          </header>
-        )}
-
-        {errorMessage && (
-          <div className="fbusers-alert" role="alert">
-            {errorMessage}
-            {hasLoaded && " Previously loaded data is still displayed."}
+              Account unavailable
+            </h2>
+            <p className="mt-2">
+              This account is no longer in the loaded list.
+            </p>
           </div>
-        )}
-
-        {selectedUser ? (
-          <div className="fbusers-profile" aria-busy={loading}>
-            <aside className="fbusers-identity">
-              <div className="fbusers-avatar" aria-hidden="true">
+        ) : (
+          <div
+            key={selectedId}
+            className="animate-fade-down grid items-start gap-5 [animation-duration:350ms] lg:grid-cols-[0.85fr_1.7fr]"
+          >
+            {/* IDENTITY */}
+            <section className="rounded-3xl bg-gradient-to-br from-plum via-[#7e5f80] to-[#b58186] p-6 text-white sm:p-8">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-lilac to-blush text-2xl font-extrabold text-plum">
                 {getInitials(selectedUser.name)}
               </div>
 
-              <h2>{getText(selectedUser.name) || "Unnamed account"}</h2>
+              <h1
+                ref={profileHeadingRef}
+                tabIndex={-1}
+                className="mt-6 break-words font-display text-4xl leading-tight tracking-tight focus:outline-none"
+              >
+                {getText(selectedUser.name, "Unnamed account") ||
+                  "Unnamed account"}
+              </h1>
 
-              <p className="fbusers-email">
+              <p className="mt-1 break-words text-sm text-white/75">
                 {getText(selectedUser.email) || "Email not provided"}
               </p>
 
-              <span
-                className={`fbusers-role ${
-                  selectedUser.roleLabel === "Admin"
-                    ? "fbusers-role-admin"
-                    : ""
-                }`}
-              >
-                {selectedUser.roleLabel === "Admin" && (
-                  <ShieldCheck size={12} aria-hidden="true" />
-                )}
-                {selectedUser.roleLabel}
-              </span>
+              <div className="mt-4">
+                <RoleBadge role={selectedUser.roleLabel} light />
+              </div>
 
-              <dl className="fbusers-fields">
-                <div className="fbusers-field">
-                  <dt>
+              <dl className="mt-7 divide-y divide-white/15 border-t border-white/15">
+                <div className="py-4">
+                  <dt className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">
                     <Mail size={13} aria-hidden="true" />
-                    Email address
+                    Email
                   </dt>
-                  <dd>{getText(selectedUser.email) || "—"}</dd>
+                  <dd className="mt-1.5 break-words text-sm">
+                    {getText(selectedUser.email) || "—"}
+                  </dd>
                 </div>
 
-                <div className="fbusers-field">
-                  <dt>
+                <div className="py-4">
+                  <dt className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">
                     <CalendarDays size={13} aria-hidden="true" />
-                    Registered on
+                    Joined
                   </dt>
-                  <dd>{formatDate(selectedUser.createdAt)}</dd>
+                  <dd className="mt-1.5 text-sm">
+                    {formatDate(selectedUser.createdAt)}
+                  </dd>
                 </div>
 
-                <div className="fbusers-field">
-                  <dt>Account ID</dt>
-                  <dd>{selectedUser.accountId}</dd>
+                <div className="py-4">
+                  <dt className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/60">
+                    <ShieldCheck size={13} aria-hidden="true" />
+                    Account type
+                  </dt>
+                  <dd className="mt-1.5 text-sm">{selectedUser.roleLabel}</dd>
                 </div>
               </dl>
-            </aside>
+            </section>
 
-            <div className="fbusers-panel">
-              <div className="fbusers-activity">
-                <div>
-                  <small>Total orders</small>
-                  <strong>{selectedUser.orderCount}</strong>
+            {/* ACTIVITY */}
+            <section className="min-w-0 rounded-3xl border border-line bg-white p-5 sm:p-7">
+              <p className={eyebrow}>{brandName} / Account activity</p>
+              <h2 className="mt-1.5 font-display text-3xl tracking-tight">
+                Order history
+              </h2>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-lilac/50 p-4">
+                  <span className={eyebrow}>Orders</span>
+                  <strong className="mt-1 block font-display text-4xl leading-tight tracking-tight">
+                    {selectedUser.orderCount.toLocaleString()}
+                  </strong>
                 </div>
-
-                <div>
-                  <small>Non-cancelled order value</small>
-                  <strong>{formatMoney(selectedUser.orderValue)}</strong>
+                <div className="rounded-2xl bg-lilac/50 p-4">
+                  <span className={eyebrow}>Order value</span>
+                  <strong className="mt-1 block break-words font-display text-4xl leading-tight tracking-tight">
+                    {formatMoney(selectedUser.orderValue)}
+                  </strong>
                 </div>
               </div>
 
-              <h2>Order history</h2>
-
-              <p className="fbusers-note">
-                Order value excludes cancelled orders and does not confirm
-                payment collection.
+              <p className="mt-3 text-xs leading-relaxed text-ink/55">
+                Order value is the total of non-cancelled orders linked to this
+                account.
               </p>
 
-              {selectedUser.userOrders.length > 0 ? (
-                <div className="fbusers-history">
+              {!selectedUser.userOrders.length ? (
+                <p className="mt-6 border-t border-line pt-6 text-sm text-ink/55">
+                  No orders are linked to this account yet.
+                </p>
+              ) : (
+                <div className="mt-5 divide-y divide-line border-t border-line">
                   {selectedUser.userOrders.map((order, index) => (
                     <article
-                      className="fbusers-order"
-                      key={getId(order) || `order-${index}`}
+                      key={getId(order) || index}
+                      className="grid grid-cols-[1fr_auto] items-center gap-4 py-4"
                     >
-                      <div>
-                        <strong>
-                          {order.orderNumber != null
-                            ? String(order.orderNumber)
-                            : getId(order) || "Order"}
+                      <div className="min-w-0">
+                        <strong className="block truncate text-sm">
+                          {getText(order.orderNumber) || "Order"}
                         </strong>
-                        <small>{formatDate(order.createdAt)}</small>
+                        <small className="mt-1 block text-xs text-ink/55">
+                          {formatDate(order.createdAt)} ·{" "}
+                          {getText(order.status) || "Status unavailable"}
+                        </small>
                       </div>
 
-                      <div className="fbusers-order-value">
-                        <strong>{formatMoney(order.totalAmount)}</strong>
-                        <small>{getText(order.status) || "Unknown status"}</small>
-                      </div>
+                      <strong
+                        className={`text-sm ${
+                          isCancelled(order) ? "text-ink/40 line-through" : ""
+                        }`}
+                      >
+                        {formatMoney(order.totalAmount)}
+                      </strong>
                     </article>
                   ))}
                 </div>
-              ) : (
-                <div className="fbusers-empty">
-                  <ShoppingBag size={28} aria-hidden="true" />
-                  <h2>No linked orders</h2>
-                  <p>This account has no linked order activity yet.</p>
-                </div>
               )}
-            </div>
+            </section>
           </div>
-        ) : (
-          <>
-            <div className="fbusers-overview" aria-label="Account summary">
-              <div className="fbusers-stat">
-                <small>Registered accounts</small>
-                <strong>{hasLoaded ? users.length : "—"}</strong>
-              </div>
-
-              <div className="fbusers-stat">
-                <small>Customers</small>
-                <strong>{hasLoaded ? customerCount : "—"}</strong>
-              </div>
-
-              <div className="fbusers-stat">
-                <small>Administrators</small>
-                <strong>{hasLoaded ? adminCount : "—"}</strong>
-              </div>
-
-              <div className="fbusers-stat">
-                <small>All non-cancelled order value</small>
-                <strong>
-                  {hasLoaded ? formatMoney(totalOrderValue) : "—"}
-                </strong>
-              </div>
-            </div>
-
-            <div className="fbusers-controls">
-              <div className="fbusers-search">
-                <Search size={17} aria-hidden="true" />
-                <input
-                  type="search"
-                  aria-label="Search accounts by name or email"
-                  placeholder="Find a person by name or email"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                />
-              </div>
-
-              <label className="fbusers-sort">
-                Sort by
-                <select
-                  value={sortBy}
-                  onChange={(event) => setSortBy(event.target.value)}
-                >
-                  <option value="Newest">Newest accounts</option>
-                  <option value="Highest Value">Highest order value</option>
-                  <option value="Most Orders">Most orders</option>
-                  <option value="A-Z">Name: A–Z</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="fbusers-tabs" aria-label="Filter by account role">
-              {roleOptions.map((role) => (
-                <button
-                  key={role}
-                  type="button"
-                  className="fbusers-tab"
-                  aria-pressed={roleFilter === role}
-                  onClick={() => setRoleFilter(role)}
-                >
-                  {role === "All" ? "All accounts" : role}
-                  {hasLoaded && (
-                    <>
-                      {" · "}
-                      {role === "All"
-                        ? userDirectory.length
-                        : userDirectory.filter(
-                            (user) => user.roleLabel === role
-                          ).length}
-                    </>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            <div className="fbusers-results">
-              <span role="status">
-                {hasLoaded
-                  ? `${filteredUsers.length} of ${users.length} accounts${
-                      loading ? " · Refreshing…" : ""
-                    }`
-                  : loading
-                    ? "Loading accounts…"
-                    : "Account data unavailable"}
-              </span>
-
-              {filtersActive && (
-                <button
-                  type="button"
-                  className="fbusers-reset"
-                  onClick={clearFilters}
-                >
-                  Reset filters
-                </button>
-              )}
-            </div>
-
-            {loading && !hasLoaded ? (
-              <div className="fbusers-empty" role="status">
-                <Loader2
-                  size={30}
-                  className="fbusers-spin"
-                  aria-hidden="true"
-                />
-                <p>Loading accounts and order activity…</p>
-              </div>
-            ) : !hasLoaded ? (
-              <div className="fbusers-empty">
-                <UsersIcon size={30} aria-hidden="true" />
-                <h2>Accounts could not be loaded</h2>
-                <p>Use Refresh to try again.</p>
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="fbusers-empty">
-                <UsersIcon size={30} aria-hidden="true" />
-                <h2>
-                  {users.length === 0
-                    ? "No registered accounts"
-                    : "No matching accounts"}
-                </h2>
-                <p>
-                  {users.length === 0
-                    ? "Registered users will appear here."
-                    : "Try another name, email address or role filter."}
-                </p>
-                {filtersActive && (
-                  <button
-                    type="button"
-                    className="fbusers-button"
-                    onClick={clearFilters}
-                  >
-                    Reset filters
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="fbusers-grid" aria-busy={loading}>
-                {filteredUsers.map((user) => (
-                  <article className="fbusers-card" key={user.accountId}>
-                    <div className="fbusers-card-top">
-                      <div className="fbusers-avatar" aria-hidden="true">
-                        {getInitials(user.name)}
-                      </div>
-
-                      <span
-                        className={`fbusers-role ${
-                          user.roleLabel === "Admin"
-                            ? "fbusers-role-admin"
-                            : ""
-                        }`}
-                      >
-                        {user.roleLabel === "Admin" && (
-                          <ShieldCheck size={12} aria-hidden="true" />
-                        )}
-                        {user.roleLabel}
-                      </span>
-                    </div>
-
-                    <h2>{getText(user.name) || "Unnamed account"}</h2>
-                    <p className="fbusers-email">
-                      {getText(user.email) || "Email not provided"}
-                    </p>
-
-                    <div className="fbusers-card-metrics">
-                      <div>
-                        <small>Orders</small>
-                        <strong>{user.orderCount}</strong>
-                      </div>
-                      <div>
-                        <small>Non-cancelled value</small>
-                        <strong>{formatMoney(user.orderValue)}</strong>
-                      </div>
-                    </div>
-
-                    <div className="fbusers-card-footer">
-                      <span>Joined {formatDate(user.createdAt)}</span>
-
-                      <button
-                        type="button"
-                        className="fbusers-open"
-                        aria-label={`View profile for ${
-                          getText(user.name) || "this account"
-                        }`}
-                        onClick={() => setSelectedId(user.accountId)}
-                      >
-                        View profile
-                        <ArrowUpRight size={16} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </>
         )}
       </div>
-    </section>
+    );
+  }
+
+  /* ================= ALL ACCOUNTS ================= */
+
+  const stats = [
+    ["Accounts", summary.total],
+    ["Customers", summary.customers],
+    ["Admins", summary.admins],
+    ["With orders", summary.withOrders],
+  ];
+
+  return (
+    <div>
+      {/* HEADING */}
+      <header className="flex flex-col gap-6 pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className={eyebrow}>{brandName} / Admin</p>
+          <h1
+            ref={directoryHeadingRef}
+            tabIndex={-1}
+            className="mt-2 font-display text-5xl leading-none tracking-tight focus:outline-none sm:text-6xl"
+          >
+            Your <em className="font-normal text-mauve">people.</em>
+          </h1>
+          <p className="mt-3 max-w-lg text-sm leading-relaxed text-ink/60">
+            Customer and admin accounts, with the orders linked to each one.
+          </p>
+        </div>
+
+        {refreshButton}
+      </header>
+
+      {errorBanner}
+
+      {/* TOTALS */}
+      <section
+        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+        aria-label="Account totals"
+      >
+        {stats.map(([label, value], index) => (
+          <div
+            key={label}
+            className={`rounded-3xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-plum/10 ${
+              index === 0
+                ? "bg-gradient-to-br from-plum via-[#7e5f80] to-[#b58186] text-white"
+                : "border border-line bg-white"
+            }`}
+          >
+            <span
+              className={
+                index === 0
+                  ? "text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/70"
+                  : eyebrow
+              }
+            >
+              {label}
+            </span>
+            <strong className="mt-1 block font-display text-4xl leading-tight tracking-tight">
+              {hasLoaded ? value.toLocaleString() : "—"}
+            </strong>
+          </div>
+        ))}
+      </section>
+
+      {/* SEARCH + SORT */}
+      <div className="mt-6 grid gap-3 md:grid-cols-[1fr_230px] md:items-end">
+        <div>
+          <label
+            htmlFor="tt-users-search"
+            className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/55"
+          >
+            Search by name or email
+          </label>
+          <div className="relative">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-mauve"
+              aria-hidden="true"
+            />
+            <input
+              id="tt-users-search"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Name or email…"
+              className={`${pillControl} pl-11`}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="tt-users-sort"
+            className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/55"
+          >
+            Sort by
+          </label>
+          <select
+            id="tt-users-sort"
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+            className={pillControl}
+          >
+            <option value="Newest">Newest</option>
+            <option value="Oldest">Oldest</option>
+            <option value="Name">Name: A to Z</option>
+            <option value="Orders">Most orders</option>
+            <option value="Value">Highest order value</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ROLE TABS */}
+      <div
+        className="mt-5 flex flex-wrap gap-2"
+        role="group"
+        aria-label="Filter by account type"
+      >
+        {roleOptions.map((role) => (
+          <button
+            key={role}
+            type="button"
+            aria-pressed={roleFilter === role}
+            onClick={() => setRoleFilter(role)}
+            className={`min-h-10 rounded-full border px-4 text-xs font-bold transition-all duration-200 ${
+              roleFilter === role
+                ? "border-plum bg-plum text-white"
+                : "border-line bg-white text-ink/60 hover:border-mauve hover:bg-lilac hover:text-plum"
+            }`}
+          >
+            {role}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-4 text-xs font-semibold text-ink/55">
+        <span role="status" aria-live="polite">
+          {loading
+            ? "Loading accounts…"
+            : hasLoaded
+              ? `${filteredUsers.length} of ${userDirectory.length} accounts`
+              : "Accounts unavailable"}
+        </span>
+
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="border-b border-mauve pb-0.5 font-extrabold text-plum"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* ACCOUNTS */}
+      <section className="mt-5" aria-label="Accounts" aria-busy={loading}>
+        {loading && !hasLoaded ? (
+          <div
+            className="flex min-h-60 flex-col items-center justify-center gap-4 rounded-3xl border border-line bg-white p-8 text-sm text-ink/60"
+            role="status"
+          >
+            <Loader2
+              size={28}
+              className="animate-spin text-mauve"
+              aria-hidden="true"
+            />
+            <p>Loading accounts…</p>
+          </div>
+        ) : !hasLoaded ? (
+          <div className="rounded-3xl border border-dashed border-line bg-white p-10 text-center text-sm text-ink/60">
+            <p>Refresh to load your accounts.</p>
+          </div>
+        ) : !filteredUsers.length ? (
+          <div className="flex min-h-60 flex-col items-center justify-center rounded-3xl border border-dashed border-line bg-white p-10 text-center text-sm text-ink/60">
+            <UsersIcon size={28} className="text-mauve" aria-hidden="true" />
+            <h2 className="mt-3 font-display text-2xl tracking-tight text-ink">
+              {userDirectory.length
+                ? "No matching accounts."
+                : "No accounts yet."}
+            </h2>
+            {userDirectory.length > 0 && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-5 inline-flex min-h-11 items-center rounded-full bg-plum px-5 text-xs font-extrabold text-white transition-colors hover:bg-plum-dark"
+              >
+                View all accounts
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredUsers.map((user) => (
+              <article
+                key={user.accountId}
+                className="group min-w-0 rounded-3xl border border-line bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-plum/10"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-lilac to-blush text-base font-extrabold text-plum transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
+                    {getInitials(user.name)}
+                  </div>
+
+                  <RoleBadge role={user.roleLabel} />
+                </div>
+
+                <h2 className="mt-5 truncate font-display text-2xl tracking-tight">
+                  {getText(user.name) || "Unnamed account"}
+                </h2>
+                <p className="truncate text-sm text-ink/55">
+                  {getText(user.email) || "Email not provided"}
+                </p>
+
+                <div className="my-5 grid grid-cols-[1fr_1.5fr] gap-4 border-y border-line py-4">
+                  <div>
+                    <small className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                      <ShoppingBag size={12} aria-hidden="true" />
+                      Orders
+                    </small>
+                    <strong className="mt-1 block text-lg font-extrabold">
+                      {user.orderCount.toLocaleString()}
+                    </strong>
+                  </div>
+                  <div className="min-w-0">
+                    <small className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                      Order value
+                    </small>
+                    <strong className="mt-1 block truncate text-lg font-extrabold">
+                      {formatMoney(user.orderValue)}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs text-ink/50">
+                    Joined {formatDate(user.createdAt)}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(user.accountId)}
+                    aria-label={`View ${getText(user.name) || "account"} details`}
+                    className="group/open inline-flex min-h-10 items-center gap-2 rounded-full bg-lilac px-4 text-xs font-extrabold text-plum transition-all duration-200 hover:bg-plum hover:text-white"
+                  >
+                    View
+                    <ArrowUpRight
+                      size={15}
+                      className="transition-transform duration-200 group-hover/open:-translate-y-0.5 group-hover/open:translate-x-0.5"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 };
 

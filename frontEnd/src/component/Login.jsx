@@ -13,7 +13,10 @@ import { API_BASE_URL } from "../config";
 import { BUSINESS_INFO } from "../storeInfo";
 
 const apiBase = String(API_BASE_URL || "").replace(/\/+$/, "");
-const REMEMBERED_EMAIL_KEY = "fablebelle-remembered-email";
+// Storage key names come from src/storeInfo.js
+const USER_KEY = BUSINESS_INFO.storageKeys.user;
+const TOKEN_KEY = BUSINESS_INFO.storageKeys.token;
+const REMEMBERED_EMAIL_KEY = TOKEN_KEY.replace(/-token$/, "-remembered-email");
 
 const getRememberedEmail = () => {
   try {
@@ -173,12 +176,12 @@ const Login = () => {
       if (!mountedRef.current) return;
 
       try {
-        localStorage.setItem("fablebelle-user", JSON.stringify(data.user));
-        localStorage.setItem("fablebelle-token", data.token);
+        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        localStorage.setItem(TOKEN_KEY, data.token);
       } catch {
         try {
-          localStorage.removeItem("fablebelle-user");
-          localStorage.removeItem("fablebelle-token");
+          localStorage.removeItem(USER_KEY);
+          localStorage.removeItem(TOKEN_KEY);
         } catch {
           // Storage may be blocked by the browser.
         }
@@ -224,51 +227,64 @@ const Login = () => {
     }
   };
 
+  const brand = BUSINESS_INFO.businessName;
+
   return (
-    <main className="fblogin">
-      <style>{styles}</style>
+    <div className="tt-site tt-auth">
+      {/* VISUAL SIDE */}
+      <aside className="tt-auth-visual">
+        <img src="/images/hero.webp" alt="" aria-hidden="true" />
 
-      <div className="fblogin-wrap">
-        <nav className="fblogin-top" aria-label="Login navigation">
-          <Link to="/" className="fblogin-brand">
-            {BUSINESS_INFO.businessName}
-            <span aria-hidden="true">.</span>
-          </Link>
+        <Link to="/" className="tt-auth-logo" aria-label={`${brand} home`}>
+          <span className="tt-logo">
+            <span className="tt-logo-mark" aria-hidden="true">
+              ✳
+            </span>
+            {brand.toUpperCase()}
+            <span className="tt-logo-dot" aria-hidden="true">
+              .
+            </span>
+          </span>
+        </Link>
 
-          <Link to="/shop" className="fblogin-back">
-            <ArrowLeft size={16} aria-hidden="true" />
-            Back to shopping
-          </Link>
-        </nav>
-
-        <header className="fblogin-heading">
-          <p className="fblogin-eyebrow">Your account / Welcome back</p>
+        <div className="tt-auth-copy">
+          <p className="tt-eyebrow">
+            <span className="tt-eyebrow-dot" />
+            Your account / Welcome back
+          </p>
 
           <h1>
-            Pick up where<br />
-            <span>you left off.</span>
+            Pick up where
+            <br />
+            <em>you left off.</em>
           </h1>
 
-          <p>
-            Sign in to your {BUSINESS_INFO.businessName} account to continue.
-          </p>
-        </header>
+          <p>Sign in to your {brand} account to continue.</p>
+        </div>
+      </aside>
 
-        <section className="fblogin-panel" aria-labelledby="fblogin-title">
-          <div className="fblogin-panel-heading">
-            <h2 id="fblogin-title">Sign in</h2>
-            <span>Good to see you again.</span>
-          </div>
+      {/* FORM SIDE */}
+      <main className="tt-auth-main">
+        <Link to="/shop" className="tt-cart-back tt-auth-back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to shopping
+        </Link>
+
+        <section className="tt-auth-panel" aria-labelledby="tt-login-title">
+          <p className="tt-eyebrow tt-eyebrow--accent">
+            Good to see you again.
+          </p>
+          <h2 id="tt-login-title">Sign in</h2>
 
           {serverError && (
-            <div className="fblogin-error-banner" role="alert">
-              {serverError}
+            <div className="tt-feedback is-error" role="alert">
+              <p>{serverError}</p>
             </div>
           )}
 
           {success ? (
-            <div className="fblogin-success">
-              <span className="fblogin-success-icon" aria-hidden="true">
+            <div className="tt-auth-success">
+              <span aria-hidden="true">
                 <Check size={26} />
               </span>
 
@@ -278,9 +294,9 @@ const Login = () => {
                 Login successful. Redirecting…
               </p>
 
-              <Link to={redirectTo} className="fblogin-submit">
+              <Link to={redirectTo} className="tt-button tt-button--dark">
                 Continue
-                <ArrowUpRight size={19} aria-hidden="true" />
+                <ArrowUpRight size={18} aria-hidden="true" />
               </Link>
             </div>
           ) : (
@@ -290,52 +306,45 @@ const Login = () => {
               noValidate
               aria-busy={loading}
             >
-              <fieldset disabled={loading} className="fblogin-fieldset">
-                <legend className="fblogin-sr-only">Login details</legend>
+              <fieldset disabled={loading}>
+                <legend className="sr-only">Login details</legend>
 
-                <div className="fblogin-field">
-                  <label htmlFor="fblogin-email">Email address</label>
-
-                  <div
-                    className={`fblogin-input ${
-                      errors.email ? "has-error" : ""
-                    }`}
-                  >
-                    <input
-                      id="fblogin-email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="you@example.com"
-                      autoComplete="username"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      required
-                      aria-invalid={Boolean(errors.email)}
-                      aria-describedby={
-                        errors.email ? "fblogin-email-error" : undefined
-                      }
-                    />
-                  </div>
-
+                <label
+                  className={`tt-field${errors.email ? " has-error" : ""}`}
+                  htmlFor="tt-login-email"
+                >
+                  <span>Email address</span>
+                  <input
+                    id="tt-login-email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="you@example.com"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    required
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={
+                      errors.email ? "tt-login-email-error" : undefined
+                    }
+                  />
                   {errors.email && (
-                    <p id="fblogin-email-error" className="fblogin-field-error">
-                      {errors.email}
-                    </p>
+                    <em id="tt-login-email-error">{errors.email}</em>
                   )}
-                </div>
+                </label>
 
-                <div className="fblogin-field">
-                  <label htmlFor="fblogin-password">Password</label>
+                <div
+                  className={`tt-field${errors.password ? " has-error" : ""}`}
+                >
+                  <label htmlFor="tt-login-password">
+                    <span>Password</span>
+                  </label>
 
-                  <div
-                    className={`fblogin-input ${
-                      errors.password ? "has-error" : ""
-                    }`}
-                  >
+                  <div className="tt-password">
                     <input
-                      id="fblogin-password"
+                      id="tt-login-password"
                       name="password"
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
@@ -348,17 +357,16 @@ const Login = () => {
                       minLength={6}
                       aria-invalid={Boolean(errors.password)}
                       aria-describedby={
-                        errors.password ? "fblogin-password-error" : undefined
+                        errors.password ? "tt-login-password-error" : undefined
                       }
                     />
 
                     <button
                       type="button"
-                      className="fblogin-visibility"
                       onClick={() => setShowPassword((current) => !current)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       aria-pressed={showPassword}
-                      aria-controls="fblogin-password"
+                      aria-controls="tt-login-password"
                     >
                       {showPassword ? (
                         <EyeOff size={18} aria-hidden="true" />
@@ -369,16 +377,11 @@ const Login = () => {
                   </div>
 
                   {errors.password && (
-                    <p
-                      id="fblogin-password-error"
-                      className="fblogin-field-error"
-                    >
-                      {errors.password}
-                    </p>
+                    <em id="tt-login-password-error">{errors.password}</em>
                   )}
                 </div>
 
-                <label className="fblogin-remember">
+                <label className="tt-check">
                   <input
                     name="rememberEmail"
                     type="checkbox"
@@ -390,46 +393,41 @@ const Login = () => {
 
                 <button
                   type="submit"
-                  className="fblogin-submit"
+                  className="tt-button tt-button--dark tt-auth-submit"
                   disabled={loading}
                 >
                   {loading ? "Signing in…" : "Sign in"}
 
                   {loading ? (
-                    <Loader2
-                      size={18}
-                      className="fblogin-spin"
-                      aria-hidden="true"
-                    />
+                    <Loader2 size={18} className="tt-spinner" aria-hidden="true" />
                   ) : (
-                    <ArrowUpRight size={19} aria-hidden="true" />
+                    <ArrowUpRight size={18} aria-hidden="true" />
                   )}
                 </button>
               </fieldset>
             </form>
           )}
 
-          <div className="fblogin-create">
+          <div className="tt-auth-switch">
             <div>
-              <p className="fblogin-eyebrow">New here?</p>
+              <p className="tt-eyebrow tt-eyebrow--accent">New here?</p>
               <p>Make yourself at home.</p>
             </div>
 
-            <Link to="/signup">
+            <Link to="/signup" className="tt-text-arrow">
               Create account
-              <ArrowUpRight size={18} aria-hidden="true" />
+              <ArrowUpRight size={17} aria-hidden="true" />
             </Link>
           </div>
         </section>
 
-        <p className="fblogin-guest">
+        <p className="tt-auth-guest">
           An account is not required to continue as a guest during checkout.
         </p>
 
-        <footer className="fblogin-footer">
+        <footer className="tt-auth-footer">
           <span>
-            © {new Date().getFullYear()} {BUSINESS_INFO.businessName}.
-            All rights reserved.
+            © {new Date().getFullYear()} {brand}. All rights reserved.
           </span>
 
           <div>
@@ -437,409 +435,9 @@ const Login = () => {
             <Link to="/terms-and-conditions">Terms</Link>
           </div>
         </footer>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 };
-
-const styles = `
-  .fblogin {
-    --ink: #173f36;
-    --deep: #102e28;
-    --bone: #f5f0e6;
-    --paper: #fffdf5;
-    --brass: #a56e4f;
-    --muted: #626e67;
-    --line: rgba(23, 63, 54, .17);
-    --error: #a13832;
-
-    min-height: 100vh;
-    background: var(--bone);
-    color: var(--ink);
-    font-family: 'Onest', ui-sans-serif, system-ui, sans-serif;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .fblogin *,
-  .fblogin *::before,
-  .fblogin *::after { box-sizing: border-box; }
-
-  .fblogin a {
-    color: inherit;
-    text-decoration: none;
-    text-underline-offset: 4px;
-  }
-
-  .fblogin input,
-  .fblogin button { font: inherit; }
-
-  .fblogin button { cursor: pointer; }
-  .fblogin button:disabled { cursor: not-allowed; }
-
-  .fblogin a:focus-visible,
-  .fblogin button:focus-visible,
-  .fblogin input:focus-visible {
-    outline: 2px solid var(--brass);
-    outline-offset: 4px;
-  }
-
-  .fblogin-wrap {
-    width: min(100%, 1180px);
-    margin-inline: auto;
-    padding-inline: clamp(20px, 5vw, 64px);
-  }
-
-  .fblogin-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    min-height: 88px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fblogin-brand {
-    font-size: 24px;
-    font-weight: 600;
-    letter-spacing: -.055em;
-    overflow-wrap: anywhere;
-  }
-
-  .fblogin-brand > span { color: var(--brass); }
-
-  .fblogin-back {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 10px;
-    min-height: 44px;
-    font-size: 11px;
-  }
-
-  .fblogin-heading {
-    max-width: 680px;
-    margin-inline: auto;
-    padding-block: 42px 30px;
-    text-align: center;
-    animation: fbloginEnter .45s ease both;
-  }
-
-  .fblogin-eyebrow {
-    margin: 0;
-    color: var(--brass);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: .13em;
-    text-transform: uppercase;
-  }
-
-  .fblogin-heading h1 {
-    margin: 20px 0 18px;
-    font-size: clamp(42px, 5.6vw, 64px);
-    font-weight: 500;
-    line-height: 1.1;
-    letter-spacing: -.06em;
-  }
-
-  .fblogin-heading h1 > span { color: var(--brass); }
-
-  .fblogin-heading > p:last-child {
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-  }
-
-  .fblogin-panel {
-    max-width: 560px;
-    margin-inline: auto;
-    padding: 34px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-    animation: fbloginEnter .55s ease both;
-  }
-
-  .fblogin-panel-heading {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 18px;
-    padding-bottom: 22px;
-    margin-bottom: 24px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fblogin-panel-heading h2 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 500;
-    letter-spacing: -.04em;
-  }
-
-  .fblogin-panel-heading > span {
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fblogin-fieldset {
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-
-  .fblogin-field + .fblogin-field { margin-top: 22px; }
-
-  .fblogin-field > label {
-    display: block;
-    margin-bottom: 9px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .fblogin-input {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    border: 1px solid var(--line);
-    background: #fff;
-    transition: border-color .2s ease, box-shadow .2s ease;
-  }
-
-  .fblogin-input:focus-within {
-    border-color: var(--ink);
-    box-shadow: 0 0 0 3px rgba(23, 63, 54, .05);
-  }
-
-  .fblogin-input.has-error { border-color: var(--error); }
-
-  .fblogin-input input {
-    width: 100%;
-    min-width: 0;
-    min-height: 54px;
-    padding: 14px 15px;
-    border: 0;
-    background: transparent;
-    color: var(--ink);
-    font-size: 16px;
-  }
-
-  .fblogin-input input::placeholder {
-    color: #7a817b;
-    font-size: 12px;
-  }
-
-  .fblogin-visibility {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    margin-right: 4px;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-  }
-
-  .fblogin-visibility:hover { color: var(--ink); }
-
-  .fblogin-field-error {
-    margin: 8px 0 0;
-    color: var(--error);
-    font-size: 11px;
-    line-height: 1.7;
-  }
-
-  .fblogin-remember {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-height: 44px;
-    margin-block: 16px 20px;
-    color: var(--muted);
-    font-size: 11px;
-    cursor: pointer;
-  }
-
-  .fblogin-remember input {
-    flex-shrink: 0;
-    width: 17px;
-    height: 17px;
-    margin: 0;
-    accent-color: var(--ink);
-  }
-
-  .fblogin-submit {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    width: 100%;
-    min-height: 54px;
-    padding: 15px 20px;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #fff !important;
-    font-size: 12px;
-    font-weight: 500;
-    transition: background .2s ease;
-  }
-
-  .fblogin-submit:hover:not(:disabled) { background: var(--deep); }
-  .fblogin-submit:disabled { opacity: .65; }
-  .fblogin-submit > svg { flex-shrink: 0; }
-
-  .fblogin-error-banner {
-    margin-bottom: 22px;
-    padding: 14px 16px;
-    border: 1px solid rgba(161, 56, 50, .25);
-    background: #fbefec;
-    color: var(--error);
-    font-size: 12px;
-    line-height: 1.8;
-    overflow-wrap: anywhere;
-  }
-
-  .fblogin-create {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    margin-top: 28px;
-    padding-top: 24px;
-    border-top: 1px solid var(--line);
-  }
-
-  .fblogin-create > div > p:last-child {
-    margin: 7px 0 0;
-    color: var(--muted);
-    font-size: 11px;
-  }
-
-  .fblogin-create > a {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 12px;
-    min-height: 44px;
-    font-size: 11px;
-    font-weight: 500;
-  }
-
-  .fblogin-create > a:hover { text-decoration: underline; }
-
-  .fblogin-success {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    padding-block: 10px;
-    text-align: center;
-  }
-
-  .fblogin-success-icon {
-    display: grid;
-    place-items: center;
-    width: 58px;
-    height: 58px;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    background: var(--bone);
-  }
-
-  .fblogin-success h3 {
-    margin: 20px 0 10px;
-    font-size: 28px;
-    font-weight: 500;
-    letter-spacing: -.04em;
-  }
-
-  .fblogin-success p {
-    margin: 0 0 24px;
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .fblogin-guest {
-    max-width: 440px;
-    margin: 22px auto 36px;
-    color: var(--muted);
-    text-align: center;
-    font-size: 11px;
-    line-height: 1.8;
-  }
-
-  .fblogin-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 15px 25px;
-    padding-block: 20px 28px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fblogin-footer > div { display: flex; gap: 24px; }
-
-  .fblogin-footer a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-
-  .fblogin-footer a:hover { text-decoration: underline; }
-
-  .fblogin-sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .fblogin-spin { animation: fbloginSpin 1s linear infinite; }
-
-  @keyframes fbloginSpin {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes fbloginEnter {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @media (max-width: 600px) {
-    .fblogin-top { min-height: 76px; gap: 15px; }
-    .fblogin-brand { font-size: 21px; }
-    .fblogin-back { gap: 7px; font-size: 10px; }
-    .fblogin-heading { padding-block: 34px 26px; }
-    .fblogin-heading h1 { font-size: 44px; }
-    .fblogin-panel { padding: 26px 22px; }
-    .fblogin-guest { margin-bottom: 28px; }
-  }
-
-  @media (max-width: 380px) {
-    .fblogin-brand { font-size: 19px; }
-    .fblogin-back { font-size: 9px; }
-    .fblogin-heading h1 { font-size: 38px; }
-    .fblogin-panel { padding: 24px 18px; }
-    .fblogin-panel-heading { flex-wrap: wrap; gap: 8px; }
-    .fblogin-create { align-items: flex-start; flex-direction: column; gap: 8px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fblogin *,
-    .fblogin *::before,
-    .fblogin *::after {
-      animation: none !important;
-      transition: none !important;
-    }
-  }
-`;
 
 export default Login;

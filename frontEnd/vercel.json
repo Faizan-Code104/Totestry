@@ -31,7 +31,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://www.fablebelle.com https://fablebelle.com https://api.fablebelle.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://www.totestry.com https://totestry.com https://api.totestry.com https://api.emailjs.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self';"
         },
         {
           "key": "X-Content-Type-Options",

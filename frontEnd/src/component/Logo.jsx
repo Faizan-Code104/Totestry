@@ -1,60 +1,66 @@
 import React from "react";
-import { BUSINESS_INFO } from "../storeInfo";
 
-const FableBelleLogo = ({
+import storeInfo from "../storeInfo";
+
+const SIZES = {
+  sm: { brand: "text-[15px]", mark: "text-xl", tagline: "text-[9px]" },
+  md: { brand: "text-[19px]", mark: "text-2xl", tagline: "text-[10px]" },
+  lg: { brand: "text-2xl", mark: "text-3xl", tagline: "text-xs" },
+  xl: { brand: "text-3xl", mark: "text-4xl", tagline: "text-sm" },
+};
+
+/**
+ * Totestry text logo. The name and tagline come from storeInfo.js.
+ * tone="light" is for dark backgrounds.
+ */
+const Logo = ({
   size = "md",
   showTagline = false,
+  tone = "dark",
   className = "",
 }) => {
-  const sizes = {
-    sm: {
-      logo: "w-[112px] sm:w-[126px]",
-      tagline: "text-[8px]",
-    },
-    md: {
-      logo: "w-[144px] sm:w-[168px]",
-      tagline: "text-[9px]",
-    },
-    lg: {
-      logo: "w-[182px] sm:w-[210px]",
-      tagline: "text-[10px]",
-    },
-    xl: {
-      logo: "w-[224px] sm:w-[280px]",
-      tagline: "text-[11px] sm:text-xs",
-    },
-  };
-
-  const currentSize = sizes[size] || sizes.md;
-  const brandName = BUSINESS_INFO.businessName;
+  const current = SIZES[size] || SIZES.md;
+  const light = tone === "light";
 
   return (
-    <div
-      className={`inline-flex min-w-0 max-w-full select-none flex-col items-start ${className}`}
-      style={{
-        fontFamily:
-          "'Onest', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
+    <span
+      className={`group/logo inline-flex max-w-full select-none flex-col leading-none ${className}`}
+      aria-label={
+        showTagline
+          ? `${storeInfo.businessName} — ${storeInfo.tagline}`
+          : storeInfo.businessName
+      }
     >
-      <img
-        src="/logo-mark.png"
-        alt={brandName}
-        width={1960}
-        height={560}
-        draggable={false}
-        decoding="async"
-        className={`${currentSize.logo} block h-auto max-w-full object-contain`}
-      />
+      <span
+        className={`inline-flex items-center gap-1.5 whitespace-nowrap font-sans font-bold tracking-[0.13em] ${
+          current.brand
+        } ${light ? "text-white" : "text-ink"}`}
+      >
+        <span
+          aria-hidden="true"
+          className={`${current.mark} leading-none tracking-normal transition-transform duration-700 group-hover/logo:rotate-[60deg] ${
+            light ? "text-lilac" : "text-mauve"
+          }`}
+        >
+          ✳
+        </span>
+        {storeInfo.businessName.toUpperCase()}
+        <span aria-hidden="true" className="-ml-1.5 text-blush">
+          .
+        </span>
+      </span>
 
       {showTagline && (
         <span
-          className={`${currentSize.tagline} mt-2 max-w-full font-semibold uppercase leading-relaxed tracking-[0.14em] text-[#173f36] sm:tracking-[0.2em]`}
+          className={`mt-2 whitespace-nowrap font-semibold uppercase tracking-[0.2em] ${
+            current.tagline
+          } ${light ? "text-white/60" : "text-ink/50"}`}
         >
-          Carry Your Style
+          {storeInfo.tagline}
         </span>
       )}
-    </div>
+    </span>
   );
 };
 
-export default FableBelleLogo;
+export default Logo;

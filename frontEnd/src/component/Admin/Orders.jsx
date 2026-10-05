@@ -101,7 +101,7 @@ const authHeaders = () => {
   let token;
 
   try {
-    token = localStorage.getItem("fablebelle-token");
+    token = localStorage.getItem(BUSINESS_INFO.storageKeys.token);
   } catch {
     throw new Error("Unable to access your login. Please sign in again.");
   }
@@ -131,13 +131,14 @@ const ItemImage = ({ image }) => {
   }, [src]);
 
   return (
-    <div className="fborders-item-image">
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-lilac text-mauve">
       {src && !failed ? (
         <img
           src={src}
           alt=""
           loading="lazy"
           onError={() => setFailed(true)}
+          className="h-full w-full object-cover"
         />
       ) : (
         <ImageOff size={20} aria-hidden="true" />
@@ -145,6 +146,34 @@ const ItemImage = ({ image }) => {
     </div>
   );
 };
+
+// Shared Tailwind class sets
+const eyebrow =
+  "text-[10px] font-extrabold uppercase tracking-[0.16em] text-mauve";
+const control =
+  "h-12 w-full rounded-full border border-line bg-white px-4 text-sm text-ink transition-all duration-200 focus:border-mauve focus:outline-none focus:ring-4 focus:ring-mauve/15";
+const fieldLabel =
+  "mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/55";
+const detailTitle =
+  "text-[10px] font-extrabold uppercase tracking-[0.16em] text-mauve";
+
+const STATUS_STYLES = {
+  Pending: "bg-amber-50 text-amber-700",
+  Processing: "bg-lilac text-plum",
+  Shipped: "bg-sky-50 text-sky-700",
+  Delivered: "bg-emerald-50 text-emerald-700",
+  Cancelled: "bg-red-50 text-red-700",
+};
+
+const Badge = ({ status }) => (
+  <span
+    className={`inline-block shrink-0 rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider ${
+      STATUS_STYLES[status] || "bg-lilac text-ink/70"
+    }`}
+  >
+    {status}
+  </span>
+);
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -412,27 +441,28 @@ const Orders = () => {
   ];
 
   return (
-    <main className="fborders">
-      <style>{styles}</style>
-
-      <header className="fborders-heading">
+    <div>
+      {/* HEADING */}
+      <header className="flex flex-col gap-6 pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="fborders-eyebrow">
-            {BUSINESS_INFO.businessName} / Admin
+          <p className={eyebrow}>{BUSINESS_INFO.businessName} / Admin</p>
+          <h1 className="mt-2 font-display text-5xl leading-none tracking-tight sm:text-6xl">
+            Order <em className="font-normal text-mauve">desk.</em>
+          </h1>
+          <p className="mt-3 text-sm text-ink/60">
+            Review purchases and manage fulfillment from one place.
           </p>
-          <h1>Order desk.</h1>
-          <p>Review purchases and manage fulfillment from one place.</p>
         </div>
 
         <button
           type="button"
-          className="fborders-refresh"
           onClick={() => setRefreshCount((count) => count + 1)}
           disabled={loading || updating}
+          className="inline-flex min-h-12 items-center gap-2.5 self-start rounded-full border border-line bg-white px-5 text-xs font-extrabold transition-all duration-200 hover:-translate-y-0.5 hover:border-mauve hover:shadow-md disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none sm:self-auto"
         >
           <RefreshCw
             size={16}
-            className={loading ? "fborders-spin" : ""}
+            className={loading ? "animate-spin" : ""}
             aria-hidden="true"
           />
           {loading ? "Loading…" : "Refresh orders"}
@@ -440,47 +470,78 @@ const Orders = () => {
       </header>
 
       {fetchError && (
-        <div className="fborders-error" role="alert">
+        <div
+          className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+          role="alert"
+        >
           {fetchError}
-          {loaded && <p>The list shows the last successfully loaded data.</p>}
+          {loaded && (
+            <p className="mt-1 font-normal">
+              The list shows the last successfully loaded data.
+            </p>
+          )}
         </div>
       )}
 
-      <section className="fborders-summary" aria-label="Order totals">
+      {/* TOTALS */}
+      <section
+        className="grid grid-cols-2 gap-3 lg:grid-cols-[repeat(4,minmax(0,1fr))_1.5fr]"
+        aria-label="Order totals"
+      >
         {stats.map(([label, value]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <strong>{loaded ? value.toLocaleString() : "—"}</strong>
+          <div
+            key={label}
+            className="rounded-3xl border border-line bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-plum/10"
+          >
+            <span className={eyebrow}>{label}</span>
+            <strong className="mt-1 block font-display text-4xl leading-tight tracking-tight">
+              {loaded ? value.toLocaleString() : "—"}
+            </strong>
           </div>
         ))}
 
-        <div className="fborders-summary-value">
-          <span>Non-cancelled order value</span>
-          <strong>{loaded ? money(summary.value) : "—"}</strong>
+        <div className="col-span-2 rounded-3xl bg-gradient-to-br from-plum via-[#7e5f80] to-[#b58186] p-5 text-white lg:col-span-1">
+          <span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/70">
+            Non-cancelled order value
+          </span>
+          <strong className="mt-1 block font-display text-4xl leading-tight tracking-tight">
+            {loaded ? money(summary.value) : "—"}
+          </strong>
         </div>
       </section>
 
-      <div className="fborders-tools">
-        <div className="fborders-search">
-          <Search size={18} aria-hidden="true" />
-          <label htmlFor="fborders-search" className="fborders-sr-only">
+      {/* SEARCH + FILTERS */}
+      <div className="mt-6 grid gap-3 md:grid-cols-[1fr_200px_200px] md:items-end">
+        <div>
+          <label htmlFor="tt-orders-search" className={fieldLabel}>
             Search by order number, customer or email
           </label>
-          <input
-            id="fborders-search"
-            type="search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Order number, customer or email…"
-          />
+          <div className="relative">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-mauve"
+              aria-hidden="true"
+            />
+            <input
+              id="tt-orders-search"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Order number, customer or email…"
+              className={`${control} pl-11`}
+            />
+          </div>
         </div>
 
-        <div className="fborders-filter">
-          <label htmlFor="fborders-status-filter">Status</label>
+        <div>
+          <label htmlFor="tt-orders-status-filter" className={fieldLabel}>
+            Status
+          </label>
           <select
-            id="fborders-status-filter"
+            id="tt-orders-status-filter"
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
+            className={control}
           >
             {filterOptions.map((status) => (
               <option key={status}>{status}</option>
@@ -488,12 +549,15 @@ const Orders = () => {
           </select>
         </div>
 
-        <div className="fborders-filter">
-          <label htmlFor="fborders-sort">Sort by</label>
+        <div>
+          <label htmlFor="tt-orders-sort" className={fieldLabel}>
+            Sort by
+          </label>
           <select
-            id="fborders-sort"
+            id="tt-orders-sort"
             value={sortBy}
             onChange={(event) => setSortBy(event.target.value)}
+            className={control}
           >
             <option value="Newest">Newest</option>
             <option value="Highest">Highest value</option>
@@ -503,44 +567,58 @@ const Orders = () => {
         </div>
       </div>
 
-      <div className="fborders-results">
+      <div className="mt-4 flex items-center justify-between gap-4 text-xs font-semibold text-ink/55">
         <span role="status" aria-live="polite">
           {loading
             ? "Loading orders…"
             : loaded
-            ? `${filteredOrders.length} of ${orders.length} orders`
-            : "Orders unavailable"}
+              ? `${filteredOrders.length} of ${orders.length} orders`
+              : "Orders unavailable"}
         </span>
 
         {(searchTerm || statusFilter !== "All" || sortBy !== "Newest") && (
-          <button type="button" onClick={clearFilters}>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="border-b border-mauve pb-0.5 font-extrabold text-plum"
+          >
             Clear filters
           </button>
         )}
       </div>
 
-      <div className="fborders-workspace">
+      {/* LIST + DETAILS */}
+      <div className="mt-5 grid items-start gap-5 xl:grid-cols-[1.15fr_1fr]">
         <section
-          className="fborders-list"
+          className="space-y-3"
           aria-label="Customer orders"
           aria-busy={loading}
         >
           {loading && !loaded ? (
-            <div className="fborders-empty" role="status">
-              <Loader2 size={28} className="fborders-spin" aria-hidden="true" />
+            <div
+              className="flex min-h-60 flex-col items-center justify-center gap-4 rounded-3xl border border-line bg-white p-8 text-sm text-ink/60"
+              role="status"
+            >
+              <Loader2
+                size={28}
+                className="animate-spin text-mauve"
+                aria-hidden="true"
+              />
               <p>Loading customer orders…</p>
             </div>
           ) : !loaded ? (
-            <div className="fborders-empty">
+            <div className="rounded-3xl border border-line bg-white p-10 text-center text-sm text-ink/60">
               <p>Refresh to load your orders.</p>
             </div>
           ) : !filteredOrders.length ? (
-            <div className="fborders-empty">
-              <p>
-                {orders.length ? "No matching orders." : "No orders yet."}
-              </p>
+            <div className="rounded-3xl border border-line bg-white p-10 text-center text-sm text-ink/60">
+              <p>{orders.length ? "No matching orders." : "No orders yet."}</p>
               {orders.length > 0 && (
-                <button type="button" onClick={clearFilters}>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="mt-5 inline-flex min-h-11 items-center rounded-full bg-plum px-5 text-xs font-extrabold text-white transition-colors hover:bg-plum-dark"
+                >
                   View all orders
                 </button>
               )}
@@ -548,26 +626,37 @@ const Orders = () => {
           ) : (
             filteredOrders.map((order) => {
               const orderId = getId(order);
+              const selected = selectedId === orderId;
 
               return (
                 <article
                   key={orderId}
-                  className={`fborders-order ${
-                    selectedId === orderId ? "is-selected" : ""
+                  className={`rounded-3xl border bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-plum/10 ${
+                    selected
+                      ? "border-mauve shadow-lg shadow-plum/10 ring-4 ring-mauve/10"
+                      : "border-line"
                   }`}
                 >
-                  <div className="fborders-order-top">
-                    <strong>{order.orderNumber || "Order"}</strong>
-                    <span className="fborders-badge">{orderStatus(order)}</span>
+                  <div className="flex items-center justify-between gap-3">
+                    <strong className="truncate text-xs font-extrabold uppercase tracking-wider text-ink/60">
+                      {order.orderNumber || "Order"}
+                    </strong>
+                    <Badge status={orderStatus(order)} />
                   </div>
 
-                  <h2>{customerName(order)}</h2>
-                  <p>{customerEmail(order) || "Email not provided"}</p>
+                  <h2 className="mt-3 truncate font-display text-2xl tracking-tight">
+                    {customerName(order)}
+                  </h2>
+                  <p className="truncate text-sm text-ink/55">
+                    {customerEmail(order) || "Email not provided"}
+                  </p>
 
-                  <div className="fborders-order-bottom">
-                    <div>
-                      <strong>{money(order.totalAmount)}</strong>
-                      <span>
+                  <div className="mt-4 flex items-end justify-between gap-4 border-t border-line pt-4">
+                    <div className="min-w-0">
+                      <strong className="block text-lg font-extrabold">
+                        {money(order.totalAmount)}
+                      </strong>
+                      <span className="text-xs text-ink/55">
                         {itemCount(order)} units · {formatDate(order.createdAt)}
                       </span>
                     </div>
@@ -576,10 +665,19 @@ const Orders = () => {
                       type="button"
                       onClick={() => openOrder(order)}
                       aria-label={`View ${order.orderNumber || "order"} details`}
-                      aria-pressed={selectedId === orderId}
+                      aria-pressed={selected}
+                      className={`group inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-xs font-extrabold transition-all duration-200 ${
+                        selected
+                          ? "bg-plum text-white"
+                          : "bg-lilac text-plum hover:bg-plum hover:text-white"
+                      }`}
                     >
                       Details
-                      <ArrowUpRight size={17} aria-hidden="true" />
+                      <ArrowUpRight
+                        size={16}
+                        className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      />
                     </button>
                   </div>
                 </article>
@@ -590,14 +688,17 @@ const Orders = () => {
 
         <section
           ref={detailRef}
-          className="fborders-detail"
           tabIndex={-1}
-          aria-labelledby="fborders-detail-title"
+          aria-labelledby="tt-orders-detail-title"
+          className="scroll-mt-24 overflow-hidden rounded-3xl border border-line bg-white focus:outline-none xl:sticky xl:top-24"
         >
-          <div className="fborders-detail-heading">
-            <div>
-              <p className="fborders-eyebrow">Order details</p>
-              <h2 id="fborders-detail-title">
+          <div className="flex items-start justify-between gap-4 bg-gradient-to-r from-lilac via-[#f1dfe2] to-[#f6e5d5] p-5 sm:p-6">
+            <div className="min-w-0">
+              <p className={eyebrow}>Order details</p>
+              <h2
+                id="tt-orders-detail-title"
+                className="mt-1.5 break-words font-display text-3xl leading-tight tracking-tight"
+              >
                 {selectedOrder?.orderNumber || "Review an order"}
               </h2>
             </div>
@@ -607,6 +708,7 @@ const Orders = () => {
                 type="button"
                 onClick={closeOrder}
                 aria-label="Close order details"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 text-ink/70 transition-all duration-200 hover:rotate-90 hover:bg-white hover:text-ink"
               >
                 <X size={19} aria-hidden="true" />
               </button>
@@ -614,7 +716,7 @@ const Orders = () => {
           </div>
 
           {!selectedOrder ? (
-            <div className="fborders-empty">
+            <div className="p-10 text-center text-sm leading-relaxed text-ink/60">
               <p>
                 {selectedId
                   ? "This order is no longer in the loaded list."
@@ -622,21 +724,27 @@ const Orders = () => {
               </p>
             </div>
           ) : (
-            <div className="fborders-detail-body">
-              <div className="fborders-detail-meta">
+            <div key={selectedId} className="animate-fade-down space-y-6 p-5 [animation-duration:350ms] sm:p-6">
+              <div className="flex items-center justify-between gap-4 text-sm text-ink/60">
                 <span>{formatDate(selectedOrder.createdAt)}</span>
-                <span className="fborders-badge">{selectedStatus}</span>
+                <Badge status={selectedStatus} />
               </div>
 
-              <form onSubmit={handleStatusUpdate} className="fborders-update">
-                <label htmlFor="fborders-update-status">Fulfillment status</label>
+              <form
+                onSubmit={handleStatusUpdate}
+                className="rounded-2xl bg-lilac/50 p-4"
+              >
+                <label htmlFor="tt-orders-update-status" className={fieldLabel}>
+                  Fulfillment status
+                </label>
 
-                <div>
+                <div className="flex flex-col gap-2.5 sm:flex-row">
                   <select
-                    id="fborders-update-status"
+                    id="tt-orders-update-status"
                     value={draftStatus}
                     onChange={(event) => setDraftStatus(event.target.value)}
                     disabled={updating || loading}
+                    className={`${control} disabled:opacity-60`}
                   >
                     {!STATUSES.includes(selectedStatus) && (
                       <option value={selectedStatus}>{selectedStatus}</option>
@@ -654,624 +762,104 @@ const Orders = () => {
                       draftStatus === selectedStatus ||
                       !STATUSES.includes(draftStatus)
                     }
+                    className="h-12 shrink-0 rounded-full bg-plum px-6 text-xs font-extrabold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-plum-dark disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {updating ? "Saving…" : "Save status"}
                   </button>
                 </div>
 
                 {updateError && (
-                  <p className="fborders-update-error" role="alert">
+                  <p
+                    className="mt-3 text-xs font-semibold text-red-700"
+                    role="alert"
+                  >
                     {updateError}
                   </p>
                 )}
 
-                <p className="fborders-notice" role="status" aria-live="polite">
+                <p
+                  className="mt-3 text-xs font-semibold text-emerald-700 empty:hidden"
+                  role="status"
+                  aria-live="polite"
+                >
                   {notice}
                 </p>
               </form>
 
-              <div className="fborders-detail-section">
-                <h3>Customer</h3>
-                <p>{customerName(selectedOrder)}</p>
-                {customerEmail(selectedOrder) && (
-                  <p>{customerEmail(selectedOrder)}</p>
-                )}
-                {selectedOrder.shippingAddress?.phone && (
-                  <p>{selectedOrder.shippingAddress.phone}</p>
-                )}
+              <div>
+                <h3 className={detailTitle}>Customer</h3>
+                <div className="mt-2 space-y-0.5 text-sm leading-relaxed text-ink/75">
+                  <p className="font-bold text-ink">
+                    {customerName(selectedOrder)}
+                  </p>
+                  {customerEmail(selectedOrder) && (
+                    <p className="break-words">{customerEmail(selectedOrder)}</p>
+                  )}
+                  {selectedOrder.shippingAddress?.phone && (
+                    <p>{selectedOrder.shippingAddress.phone}</p>
+                  )}
+                </div>
               </div>
 
-              <div className="fborders-detail-section">
-                <h3>Shipping address</h3>
-                <p>{shippingAddress(selectedOrder) || "Not provided"}</p>
+              <div>
+                <h3 className={detailTitle}>Shipping address</h3>
+                <p className="mt-2 break-words text-sm leading-relaxed text-ink/75">
+                  {shippingAddress(selectedOrder) || "Address not provided"}
+                </p>
               </div>
 
-              <div className="fborders-detail-section">
-                <h3>Ordered items</h3>
+              <div>
+                <h3 className={detailTitle}>
+                  Items · {itemCount(selectedOrder)} units
+                </h3>
 
-                {!orderItems(selectedOrder).length ? (
-                  <p>No item details provided.</p>
+                {orderItems(selectedOrder).length ? (
+                  <ul className="mt-2 divide-y divide-line">
+                    {orderItems(selectedOrder).map((item, index) => (
+                      <li
+                        key={`${item.product || item._id || "item"}-${index}`}
+                        className="flex items-center gap-4 py-3.5"
+                      >
+                        <ItemImage image={item.image} />
+
+                        <div className="min-w-0 flex-1">
+                          <strong className="block truncate text-sm">
+                            {item.name || "Product"}
+                          </strong>
+                          <span className="text-xs text-ink/55">
+                            {Math.max(0, numeric(item.quantity))} ×{" "}
+                            {money(item.price)}
+                          </span>
+                        </div>
+
+                        <strong className="shrink-0 text-sm">
+                          {money(
+                            numeric(item.price) *
+                              Math.max(0, numeric(item.quantity)),
+                          )}
+                        </strong>
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
-                  orderItems(selectedOrder).map((item, index) => (
-                    <div className="fborders-item" key={index}>
-                      <ItemImage
-                        image={
-                          item.image ||
-                          item.product?.images?.[0] ||
-                          item.product?.image
-                        }
-                      />
-                      <div>
-                        <h4>{item.name || item.product?.name || "Product"}</h4>
-                        <p>
-                          {numeric(item.quantity)} × {money(item.price)}
-                        </p>
-                      </div>
-                      <strong>
-                        {money(numeric(item.price) * numeric(item.quantity))}
-                      </strong>
-                    </div>
-                  ))
+                  <p className="mt-2 text-sm text-ink/55">
+                    No item details for this order.
+                  </p>
                 )}
               </div>
 
-              <div className="fborders-total">
-                <span>Order total</span>
-                <strong>{money(selectedOrder.totalAmount)}</strong>
+              <div className="flex items-baseline justify-between gap-4 border-t border-line pt-5">
+                <span className={detailTitle}>Order total</span>
+                <strong className="font-display text-4xl tracking-tight">
+                  {money(selectedOrder.totalAmount)}
+                </strong>
               </div>
             </div>
           )}
         </section>
       </div>
-    </main>
+    </div>
   );
 };
-
-const styles = `
-  .fborders {
-    --ink: #173f36;
-    --deep: #102e28;
-    --paper: #fffdf5;
-    --bone: #f5f0e6;
-    --brass: #a56e4f;
-    --muted: #626e67;
-    --line: rgba(23,63,54,.17);
-    min-width: 0;
-    padding: clamp(18px,3vw,36px);
-    background: var(--bone);
-    color: var(--ink);
-    font-family: 'Onest', ui-sans-serif, system-ui, sans-serif;
-    line-height: 1.6;
-  }
-
-  .fborders *, .fborders *::before, .fborders *::after {
-    box-sizing: border-box;
-  }
-
-  .fborders button, .fborders input, .fborders select { font: inherit; }
-  .fborders button { cursor: pointer; }
-  .fborders button:disabled { opacity: .5; cursor: not-allowed; }
-
-  .fborders button:focus-visible,
-  .fborders input:focus-visible,
-  .fborders select:focus-visible,
-  .fborders-detail:focus-visible {
-    outline: 2px solid var(--brass);
-    outline-offset: 4px;
-  }
-
-  .fborders-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 25px;
-    padding-bottom: 25px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fborders-eyebrow {
-    margin: 0;
-    color: var(--brass);
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-  }
-
-  .fborders-heading h1 {
-    margin: 10px 0 8px;
-    font-size: clamp(32px,4vw,44px);
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: -.05em;
-  }
-
-  .fborders-heading > div > p:last-child {
-    margin: 0;
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .fborders-refresh {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 12px;
-    min-height: 46px;
-    padding: 12px 17px;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #fff;
-    font-size: 11px;
-  }
-
-  .fborders-summary {
-    display: grid;
-    grid-template-columns: repeat(4,minmax(0,1fr)) minmax(0,1.5fr);
-    margin-block: 25px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-  }
-
-  .fborders-summary > div {
-    min-width: 0;
-    padding: 22px;
-    border-right: 1px solid var(--line);
-  }
-
-  .fborders-summary > div:last-child { border-right: 0; }
-
-  .fborders-summary span {
-    display: block;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fborders-summary strong {
-    display: block;
-    margin-top: 8px;
-    font-size: 27px;
-    font-weight: 500;
-    line-height: 1.2;
-    letter-spacing: -.035em;
-    overflow-wrap: anywhere;
-  }
-
-  .fborders-summary-value { background: #e9eddf; }
-
-  .fborders-tools {
-    display: grid;
-    grid-template-columns: minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);
-    gap: 12px;
-  }
-
-  .fborders-search {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-    padding-inline: 15px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-  }
-
-  .fborders-search > svg { flex-shrink: 0; }
-
-  .fborders-search input {
-    width: 100%;
-    min-width: 0;
-    min-height: 56px;
-    border: 0;
-    background: transparent;
-    color: var(--ink);
-    font-size: 16px;
-  }
-
-  .fborders-search input::placeholder { font-size: 11px; color: var(--muted); }
-
-  .fborders-filter {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    padding: 7px 14px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-  }
-
-  .fborders-filter label { color: var(--muted); font-size: 9px; }
-
-  .fborders-filter select {
-    width: 100%;
-    min-width: 0;
-    min-height: 32px;
-    border: 0;
-    background: transparent;
-    color: var(--ink);
-    font-size: 16px;
-  }
-
-  .fborders-results {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    min-height: 60px;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fborders-results button {
-    min-height: 44px;
-    border: 0;
-    background: transparent;
-    color: var(--ink);
-    font-size: 10px;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
-
-  .fborders-workspace {
-    display: grid;
-    grid-template-columns: minmax(0,1.15fr) minmax(0,1fr);
-    align-items: start;
-    gap: 22px;
-    animation: fbordersEnter .4s ease both;
-  }
-
-  .fborders-list { min-width: 0; }
-
-  .fborders-order {
-    padding: 22px;
-    margin-bottom: 12px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-    transition: border-color .2s ease;
-  }
-
-  .fborders-order.is-selected {
-    border-color: var(--ink);
-    box-shadow: inset 3px 0 0 var(--ink);
-  }
-
-  .fborders-order-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .fborders-order-top > strong {
-    font-size: 11px;
-    font-weight: 500;
-    overflow-wrap: anywhere;
-  }
-
-  .fborders-badge {
-    padding: 5px 9px;
-    background: var(--bone);
-    font-size: 9px;
-  }
-
-  .fborders-order h2 {
-    margin: 18px 0 5px;
-    font-size: 20px;
-    font-weight: 500;
-    letter-spacing: -.035em;
-    overflow-wrap: anywhere;
-  }
-
-  .fborders-order > p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 11px;
-    overflow-wrap: anywhere;
-  }
-
-  .fborders-order-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 18px;
-    padding-top: 18px;
-    margin-top: 20px;
-    border-top: 1px solid var(--line);
-  }
-
-  .fborders-order-bottom strong {
-    display: block;
-    font-size: 18px;
-    font-weight: 500;
-  }
-
-  .fborders-order-bottom span {
-    display: block;
-    margin-top: 4px;
-    color: var(--muted);
-    font-size: 9px;
-  }
-
-  .fborders-order-bottom button {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 12px;
-    min-height: 44px;
-    padding: 10px 14px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--ink);
-    font-size: 11px;
-  }
-
-  .fborders-order-bottom button:hover { border-color: var(--ink); }
-
-  .fborders-detail {
-    min-width: 0;
-    border: 1px solid var(--line);
-    background: var(--paper);
-    scroll-margin-top: 25px;
-  }
-
-  .fborders-detail-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    padding: 24px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fborders-detail-heading h2 {
-    margin: 9px 0 0;
-    font-size: 24px;
-    font-weight: 500;
-    letter-spacing: -.04em;
-    overflow-wrap: anywhere;
-  }
-
-  .fborders-detail-heading button {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--ink);
-  }
-
-  .fborders-detail-body { padding: 24px; }
-
-  .fborders-detail-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fborders-update {
-    padding: 18px;
-    margin-top: 22px;
-    background: var(--bone);
-    border: 1px solid var(--line);
-  }
-
-  .fborders-update > label {
-    display: block;
-    margin-bottom: 10px;
-    font-size: 11px;
-    font-weight: 500;
-  }
-
-  .fborders-update > div {
-    display: flex;
-    gap: 10px;
-  }
-
-  .fborders-update select {
-    flex: 1;
-    min-width: 0;
-    min-height: 46px;
-    padding: 10px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-    color: var(--ink);
-    font-size: 16px;
-  }
-
-  .fborders-update button {
-    min-height: 46px;
-    padding: 12px 14px;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #fff;
-    font-size: 10px;
-  }
-
-  .fborders-update-error,
-  .fborders-notice {
-    margin: 12px 0 0;
-    font-size: 11px;
-    line-height: 1.8;
-  }
-
-  .fborders-update-error { color: #a13832; }
-  .fborders-notice:empty { margin: 0; }
-
-  .fborders-detail-section {
-    padding-block: 23px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fborders-detail-section h3 {
-    margin: 0 0 13px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  .fborders-detail-section > p {
-    margin: 5px 0;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.85;
-    overflow-wrap: anywhere;
-  }
-
-  .fborders-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-block: 12px;
-  }
-
-  .fborders-item-image {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: 54px;
-    height: 62px;
-    background: var(--bone);
-    color: var(--muted);
-  }
-
-  .fborders-item-image img {
-    width: 100%;
-    height: 100%;
-    padding: 5px;
-    object-fit: contain;
-  }
-
-  .fborders-item > div:nth-child(2) {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .fborders-item h4 {
-    margin: 0;
-    font-size: 11px;
-    font-weight: 500;
-    overflow-wrap: anywhere;
-  }
-
-  .fborders-item p {
-    margin: 5px 0 0;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fborders-item > strong {
-    font-size: 11px;
-    font-weight: 500;
-    overflow-wrap: anywhere;
-  }
-
-  .fborders-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    padding-top: 23px;
-    font-size: 12px;
-  }
-
-  .fborders-total strong { font-size: 23px; font-weight: 500; }
-
-  .fborders-error {
-    margin-top: 20px;
-    padding: 16px 20px;
-    border: 1px solid #dfbdb5;
-    background: #fbefec;
-    color: #a13832;
-    font-size: 12px;
-  }
-
-  .fborders-error p { margin: 8px 0 0; font-size: 11px; }
-
-  .fborders-empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    min-height: 250px;
-    padding: 30px;
-    color: var(--muted);
-    text-align: center;
-    font-size: 12px;
-  }
-
-  .fborders-empty button {
-    min-height: 44px;
-    padding: 10px 16px;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #fff;
-    font-size: 11px;
-  }
-
-  .fborders-sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0,0,0,0);
-    white-space: nowrap;
-  }
-
-  .fborders-spin { animation: fbordersSpin 1s linear infinite; }
-
-  @keyframes fbordersSpin { to { transform: rotate(360deg); } }
-
-  @keyframes fbordersEnter {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @media (max-width: 1100px) {
-    .fborders-summary { grid-template-columns: repeat(4,minmax(0,1fr)); }
-    .fborders-summary-value { grid-column: 1 / -1; border-top: 1px solid var(--line); }
-  }
-
-  @media (max-width: 1000px) {
-    .fborders-workspace { grid-template-columns: minmax(0,1fr); }
-    .fborders-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
-    .fborders-order { margin: 0; }
-    .fborders-list > .fborders-empty { grid-column: 1 / -1; }
-  }
-
-  @media (max-width: 720px) {
-    .fborders-heading { align-items: flex-start; flex-direction: column; }
-    .fborders-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
-    .fborders-summary > div { padding: 18px; }
-    .fborders-summary > div:nth-child(2) { border-right: 0; }
-    .fborders-summary > div:nth-child(3),
-    .fborders-summary > div:nth-child(4) { border-top: 1px solid var(--line); }
-    .fborders-summary > div:nth-child(4) { border-right: 0; }
-    .fborders-tools { grid-template-columns: repeat(2,minmax(0,1fr)); }
-    .fborders-search { grid-column: 1 / -1; }
-    .fborders-list { grid-template-columns: minmax(0,1fr); }
-    .fborders-detail-heading, .fborders-detail-body { padding: 20px; }
-  }
-
-  @media (max-width: 380px) {
-    .fborders-order { padding: 18px; }
-    .fborders-order-bottom { gap: 10px; flex-wrap: wrap; }
-    .fborders-update > div { flex-direction: column; }
-    .fborders-item { flex-wrap: wrap; }
-    .fborders-item > strong { margin-left: 66px; }
-    .fborders-summary strong { font-size: 24px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fborders *, .fborders *::before, .fborders *::after {
-      animation: none !important;
-      transition: none !important;
-    }
-  }
-`;
 
 export default Orders;

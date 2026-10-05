@@ -1,24 +1,32 @@
 @import "tailwindcss";
+@import "./totestry.css" layer(components);
 
 @theme {
-  /* FableBelle typography */
-  --font-display: "Onest", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
+  /* Totestry typography */
+  --font-display: "Bodoni Moda", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
-  /* FableBelle palette */
-  --color-paper: #fffaf3;
-  --color-ivory: #fffaf3;
-  --color-champagne: #eadcc8;
-  --color-navy: #17243b;
-  --color-navy-dark: #101b2e;
-  --color-gold: #b58a50;
-  --color-ink: #17243b;
-  --color-line: #d6cfc4;
-  --color-mute: #535b67;
+  /* Totestry palette */
+  --color-paper: #fffcfb;
+  --color-ink: #302438;
+  --color-plum: #3e2d45;
+  --color-plum-dark: #2f2135;
+  --color-mauve: #8b6c9c;
+  --color-blush: #d69d88;
+  --color-lilac: #efe3ee;
+  --color-line: #e9e1e7;
+  --color-mute: #776c7a;
 
-  /* Existing color names retained for current components */
-  --color-bottle: #17243b;
-  --color-bottle-dark: #101b2e;
+  /* Older colour names, kept only so pages that are still waiting for
+     their redesign keep working. They now point at the Totestry palette
+     and can be deleted once every page has been updated. */
+  --color-ivory: #fffcfb;
+  --color-champagne: #efe3ee;
+  --color-navy: #3e2d45;
+  --color-navy-dark: #2f2135;
+  --color-gold: #a9788f;
+  --color-bottle: #3e2d45;
+  --color-bottle-dark: #2f2135;
 }
 
 /* ================= GLOBAL ================= */
@@ -68,13 +76,13 @@ img {
 }
 
 ::selection {
-  background-color: var(--color-navy);
+  background-color: var(--color-plum);
   color: var(--color-paper);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-gold);
-  outline-offset: 4px;
+  outline: 3px solid #7a5a86;
+  outline-offset: 3px;
 }
 
 /* ================= ANIMATIONS ================= */

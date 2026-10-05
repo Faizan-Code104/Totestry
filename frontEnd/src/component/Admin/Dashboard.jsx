@@ -120,13 +120,14 @@ const ProductThumbnail = ({ image, rank }) => {
   }, [src]);
 
   return (
-    <div className="fbadmin-product-image">
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-lilac text-xs font-extrabold text-mauve">
       {src && !failed ? (
         <img
           src={src}
           alt=""
           loading="lazy"
           onError={() => setFailed(true)}
+          className="h-full w-full object-cover"
         />
       ) : (
         <span>{String(rank).padStart(2, "0")}</span>
@@ -134,6 +135,23 @@ const ProductThumbnail = ({ image, rank }) => {
     </div>
   );
 };
+
+// Shared Tailwind class sets
+const eyebrow =
+  "text-[10px] font-extrabold uppercase tracking-[0.16em] text-mauve";
+const panel = "rounded-3xl border border-line bg-white p-5 sm:p-7";
+const panelTitle = "mt-1.5 font-display text-2xl tracking-tight sm:text-3xl";
+
+const STATUS_STYLES = {
+  Pending: "bg-amber-50 text-amber-700",
+  Processing: "bg-lilac text-plum",
+  Shipped: "bg-sky-50 text-sky-700",
+  Delivered: "bg-emerald-50 text-emerald-700",
+  Cancelled: "bg-red-50 text-red-700",
+};
+
+const statusClass = (status) =>
+  STATUS_STYLES[status] || "bg-lilac text-ink/70";
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
@@ -153,7 +171,7 @@ const Dashboard = () => {
         let token;
 
         try {
-          token = localStorage.getItem("fablebelle-token");
+          token = localStorage.getItem(BUSINESS_INFO.storageKeys.token);
         } catch {
           throw new Error("Unable to access your login. Please sign in again.");
         }
@@ -392,52 +410,74 @@ const Dashboard = () => {
   }, [data]);
 
   return (
-    <main className="fbadmin">
-      <style>{styles}</style>
-
-      <header className="fbadmin-heading">
+    <div>
+      {/* HEADING */}
+      <header className="flex flex-col gap-6 pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="fbadmin-eyebrow">
-            {BUSINESS_INFO.businessName} / Admin
+          <p className={eyebrow}>{BUSINESS_INFO.businessName} / Admin</p>
+          <h1 className="mt-2 font-display text-5xl leading-none tracking-tight sm:text-6xl">
+            Store <em className="font-normal text-mauve">overview.</em>
+          </h1>
+          <p className="mt-3 text-sm text-ink/60">
+            Your orders, collection and customers at a glance.
           </p>
-          <h1>Store overview.</h1>
-          <p>Your orders, collection and customers at a glance.</p>
         </div>
 
-        <div className="fbadmin-actions">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             disabled={loading}
             onClick={() => setRefreshCount((value) => value + 1)}
-            className="fbadmin-refresh"
+            className="inline-flex min-h-12 items-center gap-2.5 rounded-full border border-line bg-white px-5 text-xs font-extrabold transition-all duration-200 hover:-translate-y-0.5 hover:border-mauve hover:shadow-md disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
           >
             <RefreshCw
               size={16}
-              className={loading ? "fbadmin-spin" : ""}
+              className={loading ? "animate-spin" : ""}
               aria-hidden="true"
             />
             {loading ? "Loading…" : "Refresh"}
           </button>
 
-          <Link to="/shop" className="fbadmin-primary">
+          <Link
+            to="/shop"
+            className="group inline-flex min-h-12 items-center gap-3 rounded-full bg-plum px-5 text-xs font-extrabold text-white shadow-lg shadow-plum/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-plum-dark"
+          >
             View store
-            <ArrowUpRight size={17} aria-hidden="true" />
+            <ArrowUpRight
+              size={17}
+              className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
           </Link>
         </div>
       </header>
 
       {errorMessage && (
-        <div className="fbadmin-error" role="alert">
+        <div
+          className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+          role="alert"
+        >
           {errorMessage}
-          {data && <p>The figures below show the last successful update.</p>}
+          {data && (
+            <p className="mt-1 font-normal">
+              The figures below show the last successful update.
+            </p>
+          )}
         </div>
       )}
 
       {!data ? (
-        <div className="fbadmin-state" role={loading ? "status" : undefined}>
+        <div
+          className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-3xl border border-line bg-white p-8 text-center text-sm text-ink/60"
+          role={loading ? "status" : undefined}
+        >
           {loading ? (
             <>
-              <Loader2 size={30} className="fbadmin-spin" aria-hidden="true" />
+              <Loader2
+                size={30}
+                className="animate-spin text-mauve"
+                aria-hidden="true"
+              />
               <p>Loading your store overview…</p>
             </>
           ) : (
@@ -445,10 +485,18 @@ const Dashboard = () => {
           )}
         </div>
       ) : (
-        <div className="fbadmin-content" aria-busy={loading}>
-          <div className="fbadmin-update">
+        <div
+          className={`space-y-5 transition-opacity duration-300 ${
+            loading ? "opacity-60" : ""
+          }`}
+          aria-busy={loading}
+        >
+          <div className="flex items-center gap-2 text-xs text-ink/50">
             <span>Last updated</span>
-            <time dateTime={data.updatedAt.toISOString()}>
+            <time
+              className="font-bold text-ink/70"
+              dateTime={data.updatedAt.toISOString()}
+            >
               {data.updatedAt.toLocaleString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -458,121 +506,192 @@ const Dashboard = () => {
             </time>
           </div>
 
-          <section className="fbadmin-overview" aria-label="Store totals">
-            <div className="fbadmin-value-panel">
-              <p className="fbadmin-eyebrow">All-time order value</p>
-              <h2>{money(overview.totalValue)}</h2>
-              <p className="fbadmin-value-note">
-                Total of non-cancelled orders; this is not a confirmed
-                payment or net-profit figure.
+          {/* TOTALS */}
+          <section
+            className="grid gap-5 xl:grid-cols-[1.25fr_1fr]"
+            aria-label="Store totals"
+          >
+            <div className="rounded-3xl bg-gradient-to-br from-plum via-[#7e5f80] to-[#b58186] p-6 text-white sm:p-8">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/70">
+                All-time order value
+              </p>
+              <h2 className="mt-3 font-display text-5xl leading-none tracking-tight sm:text-7xl">
+                {money(overview.totalValue)}
+              </h2>
+              <p className="mt-4 max-w-md text-xs leading-relaxed text-white/70">
+                Total of non-cancelled orders; this is not a confirmed payment
+                or net-profit figure.
               </p>
 
-              <div className="fbadmin-value-bottom">
-                <div>
-                  <span>This month</span>
-                  <strong>{money(overview.currentValue)}</strong>
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-white/12 p-4 backdrop-blur-sm">
+                  <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/65">
+                    This month
+                  </span>
+                  <strong className="mt-1.5 block text-2xl font-extrabold">
+                    {money(overview.currentValue)}
+                  </strong>
                 </div>
-                <div>
-                  <span>Average order value</span>
-                  <strong>{money(overview.average)}</strong>
+                <div className="rounded-2xl bg-white/12 p-4 backdrop-blur-sm">
+                  <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-white/65">
+                    Average order value
+                  </span>
+                  <strong className="mt-1.5 block text-2xl font-extrabold">
+                    {money(overview.average)}
+                  </strong>
                 </div>
               </div>
 
-              <p className="fbadmin-comparison">{overview.valueChange}</p>
+              <p className="mt-4 text-xs font-semibold text-white/75">
+                {overview.valueChange}
+              </p>
             </div>
 
-            <div className="fbadmin-stats">
+            <div className="grid gap-4">
               {overview.stats.map(({ title, value, change, Icon, href }) => (
-                <Link to={href} className="fbadmin-stat" key={title}>
-                  <Icon size={20} aria-hidden="true" />
-                  <div>
-                    <span>{title}</span>
-                    <strong>{value.toLocaleString()}</strong>
-                    <p>{change}</p>
+                <Link
+                  to={href}
+                  key={title}
+                  className="group flex items-center gap-4 rounded-3xl border border-line bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-mauve/50 hover:shadow-xl hover:shadow-plum/10"
+                >
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-lilac text-plum transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <span className={eyebrow}>{title}</span>
+                    <strong className="block font-display text-4xl leading-tight tracking-tight">
+                      {value.toLocaleString()}
+                    </strong>
+                    <p className="truncate text-xs text-ink/55">{change}</p>
                   </div>
-                  <ArrowUpRight size={17} aria-hidden="true" />
+
+                  <ArrowUpRight
+                    size={18}
+                    className="shrink-0 text-mauve transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
                 </Link>
               ))}
             </div>
           </section>
 
-          <section className="fbadmin-panel fbadmin-sales">
-            <div className="fbadmin-section-heading">
+          {/* MONTHLY CHART */}
+          <section className={panel}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="fbadmin-eyebrow">Monthly activity</p>
-                <h2>Order value over time</h2>
+                <p className={eyebrow}>Monthly activity</p>
+                <h2 className={panelTitle}>Order value over time</h2>
               </div>
-              <div className="fbadmin-period-total">
-                <strong>{money(overview.periodValue)}</strong>
-                <span>Last 12 months · non-cancelled orders</span>
+              <div className="sm:text-right">
+                <strong className="block text-xl font-extrabold">
+                  {money(overview.periodValue)}
+                </strong>
+                <span className="text-xs text-ink/55">
+                  Last 12 months · non-cancelled orders
+                </span>
               </div>
             </div>
 
-            <div className="fbadmin-chart-scroll">
-              <div className="fbadmin-chart" aria-label="Monthly order values">
-                {overview.months.map((month) => (
-                  <div className="fbadmin-chart-column" key={month.key}>
-                    <div className="fbadmin-chart-track">
+            <div className="mt-7 overflow-x-auto pb-1">
+              <div
+                className="grid min-w-[720px] grid-cols-12 gap-3"
+                aria-label="Monthly order values"
+              >
+                {overview.months.map((month, index) => (
+                  <div className="group text-center" key={month.key}>
+                    <div className="flex h-52 items-end rounded-2xl bg-lilac/50 p-1.5">
                       <div
-                        className="fbadmin-chart-bar"
+                        className={`w-full rounded-xl transition-all duration-700 ease-out group-hover:opacity-80 ${
+                          index === overview.months.length - 1
+                            ? "bg-plum"
+                            : "bg-mauve"
+                        }`}
                         style={{ height: `${month.height}%` }}
                       />
                     </div>
-                    <span>{month.label}</span>
-                    <span className="fbadmin-chart-value">
+                    <span className="mt-2.5 block text-xs font-bold">
+                      {month.label}
+                    </span>
+                    <span className="block text-[10px] text-ink/55">
                       {money(month.value)}
                     </span>
-                    <span className="fbadmin-sr-only">{month.fullLabel}</span>
+                    <span className="sr-only">{month.fullLabel}</span>
                   </div>
                 ))}
               </div>
             </div>
           </section>
 
-          <section className="fbadmin-panel fbadmin-orders">
-            <div className="fbadmin-section-heading">
+          {/* RECENT ORDERS */}
+          <section className={panel}>
+            <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="fbadmin-eyebrow">Latest activity</p>
-                <h2>Recent orders</h2>
+                <p className={eyebrow}>Latest activity</p>
+                <h2 className={panelTitle}>Recent orders</h2>
               </div>
-              <Link to="/admin/orders" className="fbadmin-text-link">
+              <Link
+                to="/admin/orders"
+                className="group inline-flex items-center gap-2 border-b-2 border-mauve pb-1 text-xs font-extrabold"
+              >
                 All orders
-                <ArrowUpRight size={17} aria-hidden="true" />
+                <ArrowUpRight
+                  size={16}
+                  className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
               </Link>
             </div>
 
             {!overview.recentOrders.length ? (
-              <p className="fbadmin-empty">No orders have been placed yet.</p>
+              <p className="mt-6 text-sm text-ink/55">
+                No orders have been placed yet.
+              </p>
             ) : (
-              <div className="fbadmin-order-list">
+              <div className="mt-5 divide-y divide-line">
                 {overview.recentOrders.map((order, index) => (
                   <article
-                    className="fbadmin-order"
                     key={getId(order) || index}
+                    className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 rounded-2xl px-2 py-4 transition-colors duration-200 hover:bg-lilac/40 md:grid-cols-[1.1fr_1.5fr_auto_auto_auto] md:gap-x-6"
                   >
-                    <div className="fbadmin-order-id">
-                      <strong>{order.orderNumber || "Order"}</strong>
-                      <span>{formatDate(order.createdAt)}</span>
+                    <div className="min-w-0">
+                      <strong className="block truncate text-sm">
+                        {order.orderNumber || "Order"}
+                      </strong>
+                      <span className="text-xs text-ink/55">
+                        {formatDate(order.createdAt)}
+                      </span>
                     </div>
 
-                    <div className="fbadmin-order-customer">
-                      <strong>{getCustomer(order)}</strong>
-                      <span>{getOrderSummary(order)}</span>
+                    <div className="order-3 col-span-2 min-w-0 md:order-none md:col-span-1">
+                      <strong className="block truncate text-sm">
+                        {getCustomer(order)}
+                      </strong>
+                      <span className="block truncate text-xs text-ink/55">
+                        {getOrderSummary(order)}
+                      </span>
                     </div>
 
-                    <span className="fbadmin-badge">{getStatus(order)}</span>
-                    <strong className="fbadmin-order-price">
+                    <span
+                      className={`justify-self-end rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider md:justify-self-auto ${statusClass(
+                        getStatus(order),
+                      )}`}
+                    >
+                      {getStatus(order)}
+                    </span>
+
+                    <strong className="order-4 text-sm md:order-none">
                       {money(order.totalAmount)}
                     </strong>
 
                     <Link
                       to="/admin/orders"
-                      className="fbadmin-order-link"
+                      className="order-5 flex h-9 w-9 items-center justify-center justify-self-end rounded-full bg-lilac text-plum transition-all duration-200 hover:bg-plum hover:text-white md:order-none"
                       aria-label={`Open orders to review ${
                         order.orderNumber || "this order"
                       }`}
                     >
-                      <ArrowUpRight size={19} aria-hidden="true" />
+                      <ArrowUpRight size={17} aria-hidden="true" />
                     </Link>
                   </article>
                 ))}
@@ -580,578 +699,79 @@ const Dashboard = () => {
             )}
           </section>
 
-          <div className="fbadmin-bottom-grid">
-            <section className="fbadmin-panel">
-              <div className="fbadmin-section-heading">
-                <div>
-                  <p className="fbadmin-eyebrow">Order distribution</p>
-                  <h2>Fulfillment status</h2>
-                </div>
-              </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {/* STATUS */}
+            <section className={panel}>
+              <p className={eyebrow}>Order distribution</p>
+              <h2 className={panelTitle}>Fulfillment status</h2>
 
-              <div className="fbadmin-status-list">
+              <div className="mt-6 space-y-5">
                 {overview.statuses.map((row) => (
-                  <div className="fbadmin-status" key={row.status}>
-                    <div>
-                      <span>{row.status}</span>
+                  <div key={row.status}>
+                    <div className="flex items-baseline justify-between gap-4 text-sm">
+                      <span className="font-semibold">{row.status}</span>
                       <strong>
-                        {row.count} <span> / {row.percent.toFixed(0)}%</span>
+                        {row.count}{" "}
+                        <span className="font-normal text-ink/50">
+                          / {row.percent.toFixed(0)}%
+                        </span>
                       </strong>
                     </div>
-                    <div className="fbadmin-progress" aria-hidden="true">
-                      <span style={{ width: `${row.percent}%` }} />
+                    <div
+                      className="mt-2 h-2 overflow-hidden rounded-full bg-lilac"
+                      aria-hidden="true"
+                    >
+                      <span
+                        className="block h-full rounded-full bg-gradient-to-r from-mauve to-blush transition-all duration-700 ease-out"
+                        style={{ width: `${row.percent}%` }}
+                      />
                     </div>
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="fbadmin-panel">
-              <div className="fbadmin-section-heading">
-                <div>
-                  <p className="fbadmin-eyebrow">Ranked by order item value</p>
-                  <h2>Top products</h2>
-                </div>
-                <Link to="/admin/products" className="fbadmin-text-link">
-                  Manage
-                  <ArrowUpRight size={17} aria-hidden="true" />
-                </Link>
-              </div>
+            {/* TOP PRODUCTS */}
+            <section className={panel}>
+              <p className={eyebrow}>Ranked by order item value</p>
+              <h2 className={panelTitle}>Top products</h2>
 
               {!overview.topProducts.length ? (
-                <p className="fbadmin-empty">
-                  Products will appear here when order activity is available.
+                <p className="mt-6 text-sm text-ink/55">
+                  No product sales to show yet.
                 </p>
               ) : (
-                <div className="fbadmin-product-list">
+                <div className="mt-5 divide-y divide-line">
                   {overview.topProducts.map((product, index) => (
-                    <div className="fbadmin-product" key={product.key}>
+                    <article
+                      key={product.key}
+                      className="flex items-center gap-4 py-4"
+                    >
                       <ProductThumbnail image={product.image} rank={index + 1} />
-                      <div>
-                        <h3>{product.name}</h3>
-                        <p>{product.category}</p>
-                        <span>{product.units.toLocaleString()} units ordered</span>
+
+                      <div className="min-w-0 flex-1">
+                        <strong className="block truncate text-sm">
+                          {product.name}
+                        </strong>
+                        <span className="block truncate text-xs text-ink/55">
+                          {product.category} · {product.units.toLocaleString()}{" "}
+                          {product.units === 1 ? "unit" : "units"}
+                        </span>
                       </div>
-                      <strong>{money(product.value)}</strong>
-                    </div>
+
+                      <strong className="shrink-0 text-sm">
+                        {money(product.value)}
+                      </strong>
+                    </article>
                   ))}
                 </div>
               )}
             </section>
           </div>
-
-          <footer className="fbadmin-footer">
-            <span>{BUSINESS_INFO.businessName} / Store management</span>
-            <div>
-              <Link to="/admin/products">Products</Link>
-              <Link to="/admin/orders">Orders</Link>
-              <Link to="/admin/users">Customers</Link>
-            </div>
-          </footer>
         </div>
       )}
-    </main>
+    </div>
   );
 };
-
-const styles = `
-  .fbadmin {
-    --ink: #173f36;
-    --deep: #102e28;
-    --paper: #fffdf5;
-    --bone: #f5f0e6;
-    --muted: #626e67;
-    --brass: #a56e4f;
-    --line: rgba(23, 63, 54, .16);
-
-    width: 100%;
-    min-width: 0;
-    padding: clamp(18px, 3vw, 36px);
-    background: var(--bone);
-    color: var(--ink);
-    font-family: 'Onest', ui-sans-serif, system-ui, sans-serif;
-    line-height: 1.6;
-  }
-
-  .fbadmin *, .fbadmin *::before, .fbadmin *::after {
-    box-sizing: border-box;
-  }
-
-  .fbadmin a { color: inherit; text-decoration: none; }
-  .fbadmin button { font: inherit; cursor: pointer; }
-
-  .fbadmin a:focus-visible, .fbadmin button:focus-visible {
-    outline: 2px solid var(--brass);
-    outline-offset: 4px;
-  }
-
-  .fbadmin-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 25px;
-    padding-bottom: 26px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fbadmin-eyebrow {
-    margin: 0;
-    color: var(--brass);
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-  }
-
-  .fbadmin-heading h1 {
-    margin: 10px 0 8px;
-    font-size: clamp(30px, 4vw, 44px);
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: -.05em;
-  }
-
-  .fbadmin-heading > div > p:last-child {
-    margin: 0;
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .fbadmin-actions {
-    display: flex;
-    flex-shrink: 0;
-    gap: 10px;
-  }
-
-  .fbadmin-primary, .fbadmin-refresh {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    min-height: 46px;
-    padding: 12px 17px;
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #fff !important;
-    font-size: 11px;
-    font-weight: 500;
-  }
-
-  .fbadmin-primary:hover { background: var(--deep); }
-
-  .fbadmin-refresh {
-    border-color: var(--line);
-    background: var(--paper);
-    color: var(--ink) !important;
-  }
-
-  .fbadmin-refresh:disabled { cursor: not-allowed; opacity: .6; }
-
-  .fbadmin-update {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding-block: 18px;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fbadmin-overview {
-    display: grid;
-    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
-    gap: 20px;
-  }
-
-  .fbadmin-value-panel {
-    padding: 30px;
-    background: var(--ink);
-    color: #fffdf5;
-  }
-
-  .fbadmin-value-panel .fbadmin-eyebrow { color: #d7e5a5; }
-
-  .fbadmin-value-panel h2 {
-    margin: 20px 0 14px;
-    font-size: clamp(34px, 4.6vw, 58px);
-    font-weight: 500;
-    line-height: 1.1;
-    letter-spacing: -.055em;
-    overflow-wrap: anywhere;
-  }
-
-  .fbadmin-value-note {
-    max-width: 440px;
-    margin: 0;
-    color: #d0d9ce;
-    font-size: 11px;
-    line-height: 1.8;
-  }
-
-  .fbadmin-value-bottom {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 25px;
-    margin-top: 30px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255,255,255,.2);
-  }
-
-  .fbadmin-value-bottom span {
-    display: block;
-    color: #d0d9ce;
-    font-size: 10px;
-  }
-
-  .fbadmin-value-bottom strong {
-    display: block;
-    margin-top: 6px;
-    font-size: 20px;
-    font-weight: 500;
-    overflow-wrap: anywhere;
-  }
-
-  .fbadmin-comparison {
-    margin: 20px 0 0;
-    color: #d7e5a5;
-    font-size: 10px;
-  }
-
-  .fbadmin-stats {
-    display: grid;
-    gap: 12px;
-  }
-
-  .fbadmin-stat {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    min-width: 0;
-    padding: 20px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-  }
-
-  .fbadmin-stat > svg { flex-shrink: 0; }
-  .fbadmin-stat > svg:first-child { color: var(--brass); }
-  .fbadmin-stat > svg:last-child { margin-left: auto; }
-  .fbadmin-stat > div { min-width: 0; }
-  .fbadmin-stat span { color: var(--muted); font-size: 10px; }
-
-  .fbadmin-stat strong {
-    display: block;
-    font-size: 27px;
-    font-weight: 500;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-  }
-
-  .fbadmin-stat p {
-    margin: 5px 0 0;
-    color: var(--muted);
-    font-size: 9px;
-  }
-
-  .fbadmin-panel {
-    min-width: 0;
-    margin-top: 22px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-  }
-
-  .fbadmin-section-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 22px;
-    padding: 24px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fbadmin-section-heading h2 {
-    margin: 8px 0 0;
-    font-size: 23px;
-    font-weight: 500;
-    letter-spacing: -.04em;
-    line-height: 1.25;
-  }
-
-  .fbadmin-period-total { text-align: right; }
-  .fbadmin-period-total strong { display: block; font-size: 22px; font-weight: 500; }
-  .fbadmin-period-total span { color: var(--muted); font-size: 9px; }
-
-  .fbadmin-chart-scroll { overflow-x: auto; padding: 28px 24px; }
-
-  .fbadmin-chart {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 15px;
-    min-width: 670px;
-  }
-
-  .fbadmin-chart-column { min-width: 0; text-align: center; }
-
-  .fbadmin-chart-track {
-    display: flex;
-    align-items: flex-end;
-    height: 190px;
-    border-bottom: 1px solid var(--line);
-    background: repeating-linear-gradient(
-      to top,
-      transparent 0,
-      transparent 46px,
-      rgba(23,63,54,.07) 47px,
-      transparent 48px
-    );
-  }
-
-  .fbadmin-chart-bar {
-    width: 100%;
-    background: var(--ink);
-    transition: height .35s ease;
-  }
-
-  .fbadmin-chart-column:nth-child(even) .fbadmin-chart-bar {
-    background: #a56e4f;
-  }
-
-  .fbadmin-chart-column > span {
-    display: block;
-    margin-top: 10px;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fbadmin-chart-column > .fbadmin-chart-value {
-    margin-top: 4px;
-    color: var(--ink);
-    font-size: 9px;
-    overflow-wrap: anywhere;
-  }
-
-  .fbadmin-text-link {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 12px;
-    min-height: 44px;
-    font-size: 11px;
-  }
-
-  .fbadmin-order {
-    display: grid;
-    grid-template-columns:
-      minmax(0, 1fr)
-      minmax(0, 1.4fr)
-      auto
-      minmax(90px, .6fr)
-      44px;
-    align-items: center;
-    gap: 20px;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fbadmin-order:last-child { border-bottom: 0; }
-
-  .fbadmin-order-id, .fbadmin-order-customer { min-width: 0; }
-
-  .fbadmin-order strong { font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
-
-  .fbadmin-order-id span, .fbadmin-order-customer span {
-    display: block;
-    margin-top: 5px;
-    color: var(--muted);
-    font-size: 10px;
-    overflow-wrap: anywhere;
-  }
-
-  .fbadmin-badge {
-    padding: 6px 10px;
-    background: var(--bone);
-    font-size: 9px;
-  }
-
-  .fbadmin-order-price { text-align: right; }
-
-  .fbadmin-order-link {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border: 1px solid var(--line);
-  }
-
-  .fbadmin-bottom-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-    gap: 22px;
-  }
-
-  .fbadmin-status-list { padding: 24px; }
-  .fbadmin-status + .fbadmin-status { margin-top: 20px; }
-
-  .fbadmin-status > div:first-child {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 9px;
-    font-size: 11px;
-  }
-
-  .fbadmin-status strong { font-weight: 500; }
-  .fbadmin-status strong > span { color: var(--muted); font-size: 10px; }
-
-  .fbadmin-progress { height: 5px; background: var(--bone); }
-  .fbadmin-progress > span { display: block; height: 100%; background: var(--ink); }
-
-  .fbadmin-status:nth-child(even) .fbadmin-progress > span {
-    background: var(--brass);
-  }
-
-  .fbadmin-product {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .fbadmin-product:last-child { border-bottom: 0; }
-  .fbadmin-product > div:nth-child(2) { min-width: 0; flex: 1; }
-
-  .fbadmin-product-image {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: 62px;
-    height: 70px;
-    background: var(--bone);
-    color: var(--brass);
-    font-size: 12px;
-  }
-
-  .fbadmin-product-image img {
-    width: 100%;
-    height: 100%;
-    padding: 6px;
-    object-fit: contain;
-  }
-
-  .fbadmin-product h3 {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-
-  .fbadmin-product p { margin: 4px 0; color: var(--muted); font-size: 9px; }
-  .fbadmin-product > div > span { color: var(--muted); font-size: 9px; }
-  .fbadmin-product > strong { font-size: 11px; font-weight: 500; }
-
-  .fbadmin-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-    padding-top: 25px;
-    margin-top: 25px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .fbadmin-footer > div { display: flex; gap: 20px; }
-  .fbadmin-footer a { display: inline-flex; align-items: center; min-height: 44px; }
-
-  .fbadmin-error {
-    margin-top: 22px;
-    padding: 16px 20px;
-    border: 1px solid #dfbdb5;
-    background: #fbefec;
-    color: #a13832;
-    font-size: 12px;
-  }
-
-  .fbadmin-error p { margin: 8px 0 0; font-size: 11px; }
-
-  .fbadmin-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    min-height: 350px;
-    padding: 30px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 13px;
-  }
-
-  .fbadmin-empty {
-    padding: 38px 24px;
-    margin: 0;
-    color: var(--muted);
-    font-size: 12px;
-    text-align: center;
-  }
-
-  .fbadmin-sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0,0,0,0);
-    white-space: nowrap;
-  }
-
-  .fbadmin-spin { animation: fbadminSpin 1s linear infinite; }
-
-  @keyframes fbadminSpin { to { transform: rotate(360deg); } }
-
-  @media (max-width: 1050px) {
-    .fbadmin-heading { align-items: flex-start; flex-direction: column; }
-    .fbadmin-overview { grid-template-columns: minmax(0, 1fr); }
-    .fbadmin-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .fbadmin-stat { align-items: flex-start; gap: 12px; padding: 18px; }
-    .fbadmin-stat > svg:last-child { display: none; }
-    .fbadmin-bottom-grid { grid-template-columns: minmax(0, 1fr); }
-  }
-
-  @media (max-width: 720px) {
-    .fbadmin-stats { grid-template-columns: minmax(0, 1fr); }
-    .fbadmin-stat > svg:last-child { display: block; }
-    .fbadmin-stat { align-items: center; }
-    .fbadmin-value-panel { padding: 24px; }
-    .fbadmin-section-heading { padding: 20px; flex-wrap: wrap; gap: 12px; }
-    .fbadmin-period-total { text-align: left; }
-    .fbadmin-order { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 20px; }
-    .fbadmin-order-id { grid-column: 1; }
-    .fbadmin-order-customer { grid-column: 1; grid-row: 2; }
-    .fbadmin-badge { grid-column: 2; grid-row: 1; }
-    .fbadmin-order-price { grid-column: 1; grid-row: 3; text-align: left; }
-    .fbadmin-order-link { grid-column: 2; grid-row: 3; justify-self: end; }
-    .fbadmin-product { padding: 18px 20px; gap: 12px; flex-wrap: wrap; }
-    .fbadmin-status-list { padding: 20px; }
-  }
-
-  @media (max-width: 380px) {
-    .fbadmin-actions { width: 100%; flex-wrap: wrap; }
-    .fbadmin-actions > * { flex: 1; }
-    .fbadmin-value-bottom { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-    .fbadmin-value-panel h2 { font-size: 34px; }
-    .fbadmin-product > strong { margin-left: 74px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fbadmin *, .fbadmin *::before, .fbadmin *::after {
-      animation: none !important;
-      transition: none !important;
-    }
-  }
-`;
 
 export default Dashboard;

@@ -82,7 +82,7 @@ const authHeaders = () => {
   let token;
 
   try {
-    token = localStorage.getItem("fablebelle-token");
+    token = localStorage.getItem(BUSINESS_INFO.storageKeys.token);
   } catch {
     throw new Error("Unable to access your login. Please sign in again.");
   }
@@ -108,10 +108,33 @@ const ProductImage = ({ image, name }) => {
       alt={name || "Product"}
       loading="lazy"
       onError={() => setFailed(true)}
+      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
   ) : (
-    <ImageOff size={26} aria-hidden="true" />
+    <ImageOff size={26} className="text-mauve" aria-hidden="true" />
   );
+};
+
+// Shared Tailwind class sets
+const eyebrow =
+  "text-[10px] font-extrabold uppercase tracking-[0.16em] text-mauve";
+const fieldLabel =
+  "mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/55";
+const control =
+  "w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink transition-all duration-200 placeholder:text-ink/35 focus:border-mauve focus:outline-none focus:ring-4 focus:ring-mauve/15 aria-[invalid=true]:border-red-300";
+const pillControl =
+  "h-12 w-full rounded-full border border-line bg-white px-4 text-sm text-ink transition-all duration-200 focus:border-mauve focus:outline-none focus:ring-4 focus:ring-mauve/15";
+const fieldError = "mt-1.5 text-xs font-semibold text-red-700";
+const secondaryButton =
+  "inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full border border-line bg-white px-5 text-xs font-extrabold transition-all duration-200 hover:-translate-y-0.5 hover:border-mauve hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none";
+const primaryButton =
+  "inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-plum px-6 text-xs font-extrabold text-white shadow-lg shadow-plum/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-plum-dark disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
+const panel = "rounded-3xl border border-line bg-white p-5 sm:p-7";
+
+const STATUS_STYLES = {
+  Active: "bg-emerald-50 text-emerald-700",
+  "Low Stock": "bg-amber-50 text-amber-700",
+  "Out of Stock": "bg-red-50 text-red-700",
 };
 
 const Products = () => {
@@ -506,35 +529,60 @@ const Products = () => {
     ["name", "Product name", "text", "Enter product name"],
     ["price", "Price (USD)", "number", "0.00"],
     ["stock", "Stock quantity", "number", "0"],
-    ["sku", "SKU", "text", "FB-BAG-001"],
+    ["sku", "SKU", "text", "TT-BAG-001"],
     ["material", "Material", "text", "Enter actual material"],
     ["weight", "Weight", "text", "Enter weight with unit"],
   ];
 
-  return (
-    <main className="fbproducts">
-      <style>{styles}</style>
+  const summary = {
+    total: products.length,
+    active: products.filter((product) => getStatus(product) === "Active").length,
+    low: products.filter((product) => getStatus(product) === "Low Stock").length,
+    out: products.filter((product) => getStatus(product) === "Out of Stock")
+      .length,
+    featured: products.filter((product) => product.isFeatured === true).length,
+  };
 
-      <header className="fbproducts-heading">
+  const hasFilters =
+    searchTerm ||
+    categoryFilter !== "All" ||
+    statusFilter !== "All" ||
+    featuredFilter !== "All" ||
+    sortBy !== "latest";
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setCategoryFilter("All");
+    setStatusFilter("All");
+    setFeaturedFilter("All");
+    setSortBy("latest");
+  };
+
+  return (
+    <div>
+      {/* HEADING */}
+      <header className="flex flex-col gap-6 pb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="fbproducts-eyebrow">
-            {BUSINESS_INFO.businessName} / Inventory
-          </p>
-          <h1 ref={headingRef} tabIndex={-1}>
+          <p className={eyebrow}>{BUSINESS_INFO.businessName} / Inventory</p>
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="mt-2 font-display text-5xl leading-none tracking-tight focus:outline-none sm:text-6xl"
+          >
             {creating ? "A new addition." : "Your collection."}
           </h1>
-          <p>
+          <p className="mt-3 text-sm text-ink/60">
             {creating
               ? "Add product details, stock and photography."
               : "Manage your products, inventory and featured pieces."}
           </p>
         </div>
 
-        <div className="fbproducts-actions">
+        <div className="flex flex-wrap items-center gap-2.5">
           {creating ? (
             <button
               type="button"
-              className="fbproducts-secondary"
+              className={secondaryButton}
               onClick={closeCreate}
               disabled={submitting}
             >
@@ -545,20 +593,20 @@ const Products = () => {
             <>
               <button
                 type="button"
-                className="fbproducts-secondary"
+                className={secondaryButton}
                 onClick={() => setRefreshCount((count) => count + 1)}
                 disabled={loading || deleting}
               >
                 <RefreshCw
                   size={16}
-                  className={loading ? "fbproducts-spin" : ""}
+                  className={loading ? "animate-spin" : ""}
                   aria-hidden="true"
                 />
                 Refresh
               </button>
               <button
                 type="button"
-                className="fbproducts-primary"
+                className={primaryButton}
                 onClick={openCreate}
                 disabled={deleting}
               >
@@ -571,83 +619,121 @@ const Products = () => {
       </header>
 
       {fetchError && (
-        <div className="fbproducts-error" role="alert">
+        <div
+          className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+          role="alert"
+        >
           {fetchError}
         </div>
       )}
 
       {actionError && (
-        <div className="fbproducts-error" role="alert">
+        <div
+          className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+          role="alert"
+        >
           {actionError}
         </div>
       )}
 
       <div role="status" aria-live="polite">
         {successMessage && (
-          <p className="fbproducts-success">{successMessage}</p>
+          <p className="animate-fade-down mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700 [animation-duration:300ms]">
+            {successMessage}
+          </p>
         )}
       </div>
 
       {creating ? (
+        /* ================= NEW PRODUCT FORM ================= */
         <form ref={formRef} onSubmit={createProduct} noValidate>
-          <fieldset disabled={submitting} className="fbproducts-fieldset">
-            <legend className="fbproducts-sr-only">New product details</legend>
+          <fieldset
+            disabled={submitting}
+            className="m-0 min-w-0 border-0 p-0 disabled:opacity-70"
+          >
+            <legend className="sr-only">New product details</legend>
 
-            <div className="fbproducts-editor">
-              <section className="fbproducts-panel">
-                <div className="fbproducts-panel-heading">
-                  <span>01</span>
-                  <h2>Product information</h2>
+            <div className="grid items-start gap-5 xl:grid-cols-[1.2fr_1fr]">
+              <section className={panel}>
+                <div className="mb-6 flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-lilac text-[11px] font-extrabold text-plum">
+                    01
+                  </span>
+                  <h2 className="font-display text-3xl tracking-tight">
+                    Product information
+                  </h2>
                 </div>
 
-                <div className="fbproducts-fields">
+                <div className="grid gap-5 sm:grid-cols-2">
                   {fields.map(([name, label, type, placeholder]) => (
-                    <div key={name} className="fbproducts-field">
-                      <label htmlFor={`fbproducts-${name}`}>{label}</label>
+                    <div
+                      key={name}
+                      className={name === "name" ? "sm:col-span-2" : undefined}
+                    >
+                      <label htmlFor={`tt-products-${name}`} className={fieldLabel}>
+                        {label}
+                      </label>
                       <input
-                        id={`fbproducts-${name}`}
+                        id={`tt-products-${name}`}
                         name={name}
                         type={type}
                         value={formData[name]}
                         onChange={handleChange}
                         placeholder={placeholder}
                         min={type === "number" ? 0 : undefined}
-                        step={name === "price" ? "0.01" : name === "stock" ? "1" : undefined}
+                        step={
+                          name === "price"
+                            ? "0.01"
+                            : name === "stock"
+                              ? "1"
+                              : undefined
+                        }
                         required
                         aria-invalid={Boolean(errors[name])}
-                        aria-describedby={errors[name] ? `fbproducts-${name}-error` : undefined}
+                        aria-describedby={
+                          errors[name] ? `tt-products-${name}-error` : undefined
+                        }
+                        className={control}
                       />
                       {errors[name] && (
-                        <p id={`fbproducts-${name}-error`} className="fbproducts-field-error">
+                        <p id={`tt-products-${name}-error`} className={fieldError}>
                           {errors[name]}
                         </p>
                       )}
                     </div>
                   ))}
 
-                  <div className="fbproducts-field fbproducts-wide">
-                    <label htmlFor="fbproducts-category">Category</label>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="tt-products-category" className={fieldLabel}>
+                      Category
+                    </label>
                     <select
-                      id="fbproducts-category"
+                      id="tt-products-category"
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
                       required
                       aria-invalid={Boolean(errors.category)}
+                      className={control}
                     >
                       {categories.map((category) => (
                         <option key={category}>{category}</option>
                       ))}
                     </select>
                     {errors.category && (
-                      <p className="fbproducts-field-error">{errors.category}</p>
+                      <p className={fieldError}>{errors.category}</p>
                     )}
                   </div>
 
-                  <div className="fbproducts-field fbproducts-wide">
-                    <label htmlFor="fbproducts-description">Description</label>
+                  <div className="sm:col-span-2">
+                    <label
+                      htmlFor="tt-products-description"
+                      className={fieldLabel}
+                    >
+                      Description
+                    </label>
                     <textarea
-                      id="fbproducts-description"
+                      id="tt-products-description"
                       name="description"
                       rows={6}
                       value={formData.description}
@@ -655,10 +741,18 @@ const Products = () => {
                       placeholder="Describe the actual product and its details…"
                       required
                       aria-invalid={Boolean(errors.description)}
-                      aria-describedby={errors.description ? "fbproducts-description-error" : undefined}
+                      aria-describedby={
+                        errors.description
+                          ? "tt-products-description-error"
+                          : undefined
+                      }
+                      className={`${control} resize-y leading-relaxed`}
                     />
                     {errors.description && (
-                      <p id="fbproducts-description-error" className="fbproducts-field-error">
+                      <p
+                        id="tt-products-description-error"
+                        className={fieldError}
+                      >
                         {errors.description}
                       </p>
                     )}
@@ -666,39 +760,55 @@ const Products = () => {
                 </div>
               </section>
 
-              <section className="fbproducts-panel">
-                <div className="fbproducts-panel-heading">
-                  <span>02</span>
-                  <h2>Photography &amp; visibility</h2>
+              <section className={panel}>
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-lilac text-[11px] font-extrabold text-plum">
+                    02
+                  </span>
+                  <h2 className="font-display text-3xl tracking-tight">
+                    Photography &amp; visibility
+                  </h2>
                 </div>
 
-                <p className="fbproducts-help">
+                <p className="text-sm leading-relaxed text-ink/60">
                   The first image is the main product image. Upload up to four
                   JPG, PNG or WEBP images, 5MB each.
                 </p>
 
-                <div className="fbproducts-previews">
-                  {uploads.map((upload, index) => (
-                    <div className="fbproducts-preview" key={upload.url}>
-                      <img src={upload.url} alt={`Product preview ${index + 1}`} />
-                      <span>{index === 0 ? "Main image" : `View ${index + 1}`}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        aria-label={`Remove image ${index + 1}`}
+                {uploads.length > 0 && (
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    {uploads.map((upload, index) => (
+                      <div
+                        key={upload.url}
+                        className="animate-fade-down group relative aspect-square overflow-hidden rounded-2xl bg-lilac [animation-duration:300ms]"
                       >
-                        <X size={16} aria-hidden="true" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                        <img
+                          src={upload.url}
+                          alt={`Product preview ${index + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                        <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-plum">
+                          {index === 0 ? "Main image" : `View ${index + 1}`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          aria-label={`Remove image ${index + 1}`}
+                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink transition-all duration-200 hover:rotate-90 hover:bg-red-50 hover:text-red-700"
+                        >
+                          <X size={16} aria-hidden="true" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                <div className="fbproducts-field">
-                  <label htmlFor="fbproducts-images">
+                <div className="mt-5">
+                  <label htmlFor="tt-products-images" className={fieldLabel}>
                     Product images · {uploads.length}/{MAX_IMAGES}
                   </label>
                   <input
-                    id="fbproducts-images"
+                    id="tt-products-images"
                     name="images"
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -706,35 +816,41 @@ const Products = () => {
                     onChange={handleImages}
                     disabled={submitting || uploads.length >= MAX_IMAGES}
                     aria-invalid={Boolean(errors.images)}
-                    aria-describedby={errors.images ? "fbproducts-images-error" : undefined}
+                    aria-describedby={
+                      errors.images ? "tt-products-images-error" : undefined
+                    }
+                    className="block w-full cursor-pointer rounded-2xl border border-dashed border-mauve/50 bg-lilac/40 p-3 text-sm text-ink/70 transition-colors file:mr-4 file:cursor-pointer file:rounded-full file:border-0 file:bg-plum file:px-4 file:py-2.5 file:text-xs file:font-extrabold file:text-white hover:bg-lilac/70 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                   {errors.images && (
-                    <p id="fbproducts-images-error" className="fbproducts-field-error">
+                    <p id="tt-products-images-error" className={fieldError}>
                       {errors.images}
                     </p>
                   )}
                 </div>
 
-                <label className="fbproducts-featured">
+                <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-line p-4 transition-colors hover:border-mauve hover:bg-lilac/30">
                   <input
                     type="checkbox"
                     name="isFeatured"
                     checked={formData.isFeatured}
                     onChange={handleChange}
+                    className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-plum"
                   />
                   <span>
-                    <strong>Show in Featured Pieces</strong>
-                    <span>
+                    <strong className="block text-sm">
+                      Show in Featured Pieces
+                    </strong>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-ink/60">
                       Keep this product in its category and also feature it on
                       the homepage.
                     </span>
                   </span>
                 </label>
 
-                <div className="fbproducts-form-footer">
+                <div className="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-line pt-5">
                   <button
                     type="button"
-                    className="fbproducts-secondary"
+                    className={secondaryButton}
                     onClick={closeCreate}
                     disabled={submitting}
                   >
@@ -742,11 +858,15 @@ const Products = () => {
                   </button>
                   <button
                     type="submit"
-                    className="fbproducts-primary"
+                    className={primaryButton}
                     disabled={submitting || loading}
                   >
                     {submitting && (
-                      <Loader2 size={17} className="fbproducts-spin" aria-hidden="true" />
+                      <Loader2
+                        size={17}
+                        className="animate-spin"
+                        aria-hidden="true"
+                      />
                     )}
                     {submitting ? "Creating…" : "Create product"}
                   </button>
@@ -756,379 +876,336 @@ const Products = () => {
           </fieldset>
         </form>
       ) : (
+        /* ================= INVENTORY ================= */
         <>
-          <section className="fbproducts-summary" aria-label="Inventory summary">
+          <section
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5"
+            aria-label="Inventory totals"
+          >
             {[
-              ["Total products", products.length],
-              ["Active", products.filter((product) => getStatus(product) === "Active").length],
-              ["Low stock", products.filter((product) => getStatus(product) === "Low Stock").length],
-              ["Featured", products.filter((product) => product.isFeatured === true).length],
-            ].map(([label, count]) => (
-              <div key={label}>
-                <span>{label}</span>
-                <strong>{loaded ? count : "—"}</strong>
+              ["Products", summary.total],
+              ["Active", summary.active],
+              ["Low stock", summary.low],
+              ["Out of stock", summary.out],
+              ["Featured", summary.featured],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-3xl border border-line bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-plum/10"
+              >
+                <span className={eyebrow}>{label}</span>
+                <strong className="mt-1 block font-display text-4xl leading-tight tracking-tight">
+                  {loaded ? value.toLocaleString() : "—"}
+                </strong>
               </div>
             ))}
           </section>
 
-          <div className="fbproducts-tools">
-            <div className="fbproducts-search">
-              <Search size={18} aria-hidden="true" />
-              <label htmlFor="fbproducts-search" className="fbproducts-sr-only">
-                Search products
+          {/* SEARCH + FILTERS */}
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.6fr_1fr_1fr_1fr_1fr] xl:items-end">
+            <div className="sm:col-span-2 xl:col-span-1">
+              <label htmlFor="tt-products-search" className={fieldLabel}>
+                Search by name, category or SKU
               </label>
-              <input
-                id="fbproducts-search"
-                type="search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search name, category or SKU…"
-              />
+              <div className="relative">
+                <Search
+                  size={18}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-mauve"
+                  aria-hidden="true"
+                />
+                <input
+                  id="tt-products-search"
+                  type="search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Name, category or SKU…"
+                  className={`${pillControl} pl-11`}
+                />
+              </div>
             </div>
 
-            {[
-              ["category", "Category", categoryFilter, setCategoryFilter, ["All", ...categories]],
-              ["status", "Stock status", statusFilter, setStatusFilter, ["All", "Active", "Low Stock", "Out of Stock"]],
-              ["featured", "Visibility", featuredFilter, setFeaturedFilter, ["All", "Featured", "Not Featured"]],
-            ].map(([key, label, value, setter, options]) => (
-              <div className="fbproducts-filter" key={key}>
-                <label htmlFor={`fbproducts-filter-${key}`}>{label}</label>
-                <select
-                  id={`fbproducts-filter-${key}`}
-                  value={value}
-                  onChange={(event) => setter(event.target.value)}
-                >
-                  {options.map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
-
-          <div className="fbproducts-results">
-            <span role="status" aria-live="polite">
-              {loading ? "Loading inventory…" : `${filteredProducts.length} products shown`}
-            </span>
             <div>
-              <label htmlFor="fbproducts-sort">Sort by</label>
+              <label htmlFor="tt-products-category-filter" className={fieldLabel}>
+                Category
+              </label>
               <select
-                id="fbproducts-sort"
+                id="tt-products-category-filter"
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                className={pillControl}
+              >
+                <option>All</option>
+                {categories.map((category) => (
+                  <option key={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="tt-products-status-filter" className={fieldLabel}>
+                Status
+              </label>
+              <select
+                id="tt-products-status-filter"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className={pillControl}
+              >
+                <option>All</option>
+                <option>Active</option>
+                <option>Low Stock</option>
+                <option>Out of Stock</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="tt-products-featured-filter" className={fieldLabel}>
+                Featured
+              </label>
+              <select
+                id="tt-products-featured-filter"
+                value={featuredFilter}
+                onChange={(event) => setFeaturedFilter(event.target.value)}
+                className={pillControl}
+              >
+                <option>All</option>
+                <option>Featured</option>
+                <option>Not featured</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="tt-products-sort" className={fieldLabel}>
+                Sort by
+              </label>
+              <select
+                id="tt-products-sort"
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value)}
+                className={pillControl}
               >
                 <option value="latest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="stock-low">Lowest stock</option>
+                <option value="price-low">Price: low to high</option>
+                <option value="price-high">Price: high to low</option>
+                <option value="stock-low">Stock: low to high</option>
                 <option value="featured">Featured first</option>
               </select>
             </div>
           </div>
 
-          {deleteProduct && (
-            <section className="fbproducts-delete" aria-labelledby="fbproducts-delete-title">
-              <div>
-                <h2 id="fbproducts-delete-title">Delete {deleteProduct.name}?</h2>
-                <p>This action cannot be undone.</p>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  className="fbproducts-secondary"
-                  disabled={deleting}
-                  onClick={() => {
-                    setDeleteProduct(null);
-                    setActionError("");
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="fbproducts-danger"
-                  disabled={deleting || loading}
-                  onClick={confirmDelete}
-                >
-                  {deleting ? "Deleting…" : "Delete product"}
-                </button>
-              </div>
-            </section>
-          )}
+          <div className="mt-4 flex items-center justify-between gap-4 text-xs font-semibold text-ink/55">
+            <span role="status" aria-live="polite">
+              {loading
+                ? "Loading products…"
+                : loaded
+                  ? `${filteredProducts.length} of ${products.length} products`
+                  : "Products unavailable"}
+            </span>
 
-          <section className="fbproducts-inventory" aria-label="Products" aria-busy={loading}>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="border-b border-mauve pb-0.5 font-extrabold text-plum"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
+          {/* PRODUCT GRID */}
+          <section className="mt-5" aria-label="Products" aria-busy={loading}>
             {loading && !loaded ? (
-              <div className="fbproducts-empty" role="status">
-                <Loader2 size={28} className="fbproducts-spin" aria-hidden="true" />
+              <div
+                className="flex min-h-60 flex-col items-center justify-center gap-4 rounded-3xl border border-line bg-white p-8 text-sm text-ink/60"
+                role="status"
+              >
+                <Loader2
+                  size={28}
+                  className="animate-spin text-mauve"
+                  aria-hidden="true"
+                />
                 <p>Loading your collection…</p>
               </div>
+            ) : !loaded ? (
+              <div className="rounded-3xl border border-line bg-white p-10 text-center text-sm text-ink/60">
+                <p>Refresh to load your products.</p>
+              </div>
             ) : !filteredProducts.length ? (
-              <div className="fbproducts-empty">
-                <p>{fetchError && !loaded ? "Inventory could not load." : "No matching products."}</p>
-                <button
-                  type="button"
-                  className="fbproducts-secondary"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setCategoryFilter("All");
-                    setStatusFilter("All");
-                    setFeaturedFilter("All");
-                    setSortBy("latest");
-                  }}
-                >
-                  Clear filters
-                </button>
+              <div className="rounded-3xl border border-line bg-white p-10 text-center text-sm text-ink/60">
+                <p>
+                  {products.length ? "No matching products." : "No products yet."}
+                </p>
+                {products.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className={`mt-5 ${primaryButton}`}
+                  >
+                    View all products
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={openCreate}
+                    className={`mt-5 ${primaryButton}`}
+                  >
+                    <Plus size={17} aria-hidden="true" />
+                    Add product
+                  </button>
+                )}
               </div>
             ) : (
-              filteredProducts.map((product) => (
-                <article className="fbproducts-product" key={getId(product)}>
-                  <div className="fbproducts-product-image">
-                    <ProductImage image={product.images?.[0]} name={product.name} />
-                  </div>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {filteredProducts.map((product) => {
+                  const productId = getId(product);
+                  const status = getStatus(product);
 
-                  <div className="fbproducts-product-info">
-                    <p className="fbproducts-eyebrow">{product.category || "Uncategorised"}</p>
-                    <h2>{product.name || "Product"}</h2>
-                    <p>SKU: {product.sku || "Not provided"}</p>
-                    <div className="fbproducts-badges">
-                      <span>{getStatus(product)}</span>
-                      {product.isFeatured === true && <span>Featured</span>}
-                    </div>
-                  </div>
-
-                  <div className="fbproducts-product-values">
-                    <strong>{money(product.price)}</strong>
-                    <span>{numeric(product.stock)} in stock</span>
-                  </div>
-
-                  <div className="fbproducts-product-actions">
-                    <Link
-                      to={`/shop/${encodeURIComponent(getId(product))}`}
-                      aria-label={`View ${product.name || "product"}`}
+                  return (
+                    <article
+                      key={productId}
+                      className="group overflow-hidden rounded-3xl border border-line bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-plum/10"
                     >
-                      <ArrowUpRight size={19} aria-hidden="true" />
-                    </Link>
-                    <button
-                      type="button"
-                      disabled={deleting}
-                      onClick={() => {
-                        setDeleteProduct(product);
-                        setActionError("");
-                        setSuccessMessage("");
-                      }}
-                      aria-label={`Delete ${product.name || "product"}`}
-                    >
-                      <Trash2 size={17} aria-hidden="true" />
-                    </button>
-                  </div>
-                </article>
-              ))
+                      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-lilac">
+                        <ProductImage
+                          image={product.images?.[0]}
+                          name={product.name}
+                        />
+
+                        <span
+                          className={`absolute left-3 top-3 rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                            STATUS_STYLES[status] || "bg-white text-ink/70"
+                          }`}
+                        >
+                          {status}
+                        </span>
+
+                        {product.isFeatured === true && (
+                          <span className="absolute right-3 top-3 rounded-full bg-plum px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                            Featured
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="p-5">
+                        <p className={eyebrow}>
+                          {product.category || "Uncategorised"}
+                        </p>
+                        <h2 className="mt-1 truncate font-display text-2xl tracking-tight">
+                          {product.name || "Product"}
+                        </h2>
+                        <p className="mt-0.5 truncate text-xs text-ink/50">
+                          SKU: {product.sku || "—"}
+                        </p>
+
+                        <div className="mt-4 flex items-end justify-between gap-3 border-t border-line pt-4">
+                          <div>
+                            <strong className="block text-lg font-extrabold">
+                              {money(product.price)}
+                            </strong>
+                            <span className="text-xs text-ink/55">
+                              {numeric(product.stock)} in stock
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Link
+                              to={`/shop/${encodeURIComponent(productId)}`}
+                              aria-label={`View ${product.name || "product"} in the store`}
+                              className="flex h-10 w-10 items-center justify-center rounded-full bg-lilac text-plum transition-all duration-200 hover:bg-plum hover:text-white"
+                            >
+                              <ArrowUpRight size={17} aria-hidden="true" />
+                            </Link>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActionError("");
+                                setSuccessMessage("");
+                                setDeleteProduct(product);
+                              }}
+                              disabled={deleting || loading}
+                              aria-label={`Delete ${product.name || "product"}`}
+                              className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600 transition-all duration-200 hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              <Trash2 size={16} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             )}
           </section>
         </>
       )}
-    </main>
+
+      {/* DELETE CONFIRMATION */}
+      {deleteProduct && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-plum-dark/55 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tt-products-delete-title"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !deleting) {
+              setDeleteProduct(null);
+            }
+          }}
+        >
+          <div className="animate-fade-down w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl [animation-duration:250ms] sm:p-8">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <Trash2 size={20} aria-hidden="true" />
+            </span>
+
+            <h2
+              id="tt-products-delete-title"
+              className="mt-4 font-display text-3xl tracking-tight"
+            >
+              Delete this product?
+            </h2>
+
+            <p className="mt-2 text-sm leading-relaxed text-ink/65">
+              <strong className="text-ink">
+                {deleteProduct.name || "This product"}
+              </strong>{" "}
+              will be removed from your collection. This cannot be undone.
+            </p>
+
+            {actionError && (
+              <p className="mt-3 text-xs font-semibold text-red-700" role="alert">
+                {actionError}
+              </p>
+            )}
+
+            <div className="mt-6 flex flex-wrap justify-end gap-2.5">
+              <button
+                type="button"
+                className={secondaryButton}
+                onClick={() => setDeleteProduct(null)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting || loading}
+                className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-red-600 px-6 text-xs font-extrabold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-700 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deleting && (
+                  <Loader2 size={17} className="animate-spin" aria-hidden="true" />
+                )}
+                {deleting ? "Deleting…" : "Delete product"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
-
-const styles = `
-  .fbproducts {
-    --ink:#173f36; --deep:#102e28; --paper:#fffdf5;
-    --bone:#f5f0e6; --brass:#a56e4f; --muted:#626e67;
-    --line:rgba(23,63,54,.17);
-    min-width:0; padding:clamp(18px,3vw,36px);
-    background:var(--bone); color:var(--ink);
-    font-family:'Onest',ui-sans-serif,system-ui,sans-serif;
-    line-height:1.6;
-  }
-  .fbproducts *, .fbproducts *::before, .fbproducts *::after { box-sizing:border-box; }
-  .fbproducts a { color:inherit; text-decoration:none; }
-  .fbproducts button, .fbproducts input, .fbproducts select, .fbproducts textarea { font:inherit; }
-  .fbproducts button { cursor:pointer; }
-  .fbproducts button:disabled { cursor:not-allowed; opacity:.5; }
-  .fbproducts a:focus-visible, .fbproducts button:focus-visible,
-  .fbproducts input:focus-visible, .fbproducts select:focus-visible,
-  .fbproducts textarea:focus-visible, .fbproducts h1:focus-visible {
-    outline:2px solid var(--brass); outline-offset:4px;
-  }
-  .fbproducts-heading {
-    display:flex; align-items:center; justify-content:space-between;
-    gap:25px; padding-bottom:25px; border-bottom:1px solid var(--line);
-  }
-  .fbproducts-eyebrow {
-    margin:0; color:var(--brass); font-size:9px;
-    font-weight:600; letter-spacing:.12em; text-transform:uppercase;
-  }
-  .fbproducts-heading h1 {
-    margin:10px 0 8px; font-size:clamp(32px,4vw,44px);
-    font-weight:500; line-height:1.15; letter-spacing:-.05em;
-  }
-  .fbproducts-heading > div > p:last-child { margin:0; color:var(--muted); font-size:12px; }
-  .fbproducts-actions { display:flex; gap:10px; flex-shrink:0; }
-  .fbproducts-primary, .fbproducts-secondary, .fbproducts-danger {
-    display:inline-flex; align-items:center; justify-content:center;
-    gap:10px; min-height:46px; padding:12px 17px;
-    border:1px solid var(--ink); background:var(--ink);
-    color:#fff; font-size:11px;
-  }
-  .fbproducts-primary:hover:not(:disabled) { background:var(--deep); }
-  .fbproducts-secondary { border-color:var(--line); background:var(--paper); color:var(--ink); }
-  .fbproducts-danger { border-color:#a13832; background:#a13832; }
-  .fbproducts-summary {
-    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
-    margin-block:25px; border:1px solid var(--line); background:var(--paper);
-  }
-  .fbproducts-summary > div { padding:22px; border-right:1px solid var(--line); }
-  .fbproducts-summary > div:last-child { border-right:0; background:#e9eddf; }
-  .fbproducts-summary span { display:block; color:var(--muted); font-size:10px; }
-  .fbproducts-summary strong { display:block; margin-top:8px; font-size:30px; font-weight:500; }
-  .fbproducts-tools {
-    display:grid; grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(0,1fr)); gap:12px;
-  }
-  .fbproducts-search {
-    display:flex; align-items:center; gap:12px; min-width:0;
-    padding-inline:14px; border:1px solid var(--line); background:var(--paper);
-  }
-  .fbproducts-search > svg { flex-shrink:0; }
-  .fbproducts-search input {
-    width:100%; min-width:0; min-height:56px; border:0;
-    background:transparent; color:var(--ink); font-size:16px;
-  }
-  .fbproducts-search input::placeholder { color:var(--muted); font-size:11px; }
-  .fbproducts-filter { min-width:0; padding:7px 12px; border:1px solid var(--line); background:var(--paper); }
-  .fbproducts-filter label { display:block; color:var(--muted); font-size:9px; }
-  .fbproducts-filter select {
-    width:100%; min-width:0; min-height:32px; border:0;
-    background:transparent; color:var(--ink); font-size:16px;
-  }
-  .fbproducts-results {
-    display:flex; align-items:center; justify-content:space-between;
-    gap:18px; padding-block:17px; color:var(--muted); font-size:10px;
-  }
-  .fbproducts-results > div { display:flex; align-items:center; gap:12px; }
-  .fbproducts-results select {
-    max-width:100%; min-height:44px; padding:8px;
-    border:1px solid var(--line); background:var(--paper);
-    color:var(--ink); font-size:16px;
-  }
-  .fbproducts-inventory { border:1px solid var(--line); background:var(--paper); animation:fbproductsEnter .4s ease both; }
-  .fbproducts-product {
-    display:grid; grid-template-columns:110px minmax(0,1fr) auto auto;
-    align-items:center; gap:25px; padding:22px;
-    border-bottom:1px solid var(--line);
-  }
-  .fbproducts-product:last-child { border-bottom:0; }
-  .fbproducts-product-image {
-    display:grid; place-items:center; width:110px; height:120px;
-    background:#eeece5; color:var(--muted);
-  }
-  .fbproducts-product-image img { width:100%; height:100%; padding:10px; object-fit:contain; }
-  .fbproducts-product-info { min-width:0; }
-  .fbproducts-product h2 { margin:9px 0 5px; font-size:20px; font-weight:500; letter-spacing:-.035em; overflow-wrap:anywhere; }
-  .fbproducts-product-info > p:not(.fbproducts-eyebrow) { margin:0; color:var(--muted); font-size:10px; overflow-wrap:anywhere; }
-  .fbproducts-badges { display:flex; gap:7px; flex-wrap:wrap; margin-top:13px; }
-  .fbproducts-badges span { padding:4px 8px; background:var(--bone); font-size:9px; }
-  .fbproducts-product-values { text-align:right; }
-  .fbproducts-product-values strong { display:block; font-size:20px; font-weight:500; }
-  .fbproducts-product-values span { display:block; margin-top:7px; color:var(--muted); font-size:10px; }
-  .fbproducts-product-actions { display:flex; gap:8px; }
-  .fbproducts-product-actions a, .fbproducts-product-actions button {
-    display:grid; place-items:center; width:44px; height:44px;
-    border:1px solid var(--line); background:transparent; color:var(--ink);
-  }
-  .fbproducts-product-actions button:hover:not(:disabled) { color:#a13832; border-color:#a13832; }
-  .fbproducts-editor {
-    display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
-    align-items:start; gap:22px; margin-top:25px;
-  }
-  .fbproducts-panel { min-width:0; padding:26px; border:1px solid var(--line); background:var(--paper); }
-  .fbproducts-panel-heading { display:flex; align-items:baseline; gap:14px; margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--line); }
-  .fbproducts-panel-heading > span { color:var(--brass); font-size:10px; }
-  .fbproducts-panel-heading h2 { margin:0; font-size:22px; font-weight:500; letter-spacing:-.04em; }
-  .fbproducts-fieldset { min-width:0; margin:0; padding:0; border:0; }
-  .fbproducts-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
-  .fbproducts-wide { grid-column:1 / -1; }
-  .fbproducts-field { min-width:0; }
-  .fbproducts-field > label { display:block; margin-bottom:9px; font-size:11px; font-weight:500; }
-  .fbproducts-field input, .fbproducts-field select, .fbproducts-field textarea {
-    width:100%; min-width:0; min-height:48px; padding:12px;
-    border:1px solid var(--line); background:#fff; color:var(--ink); font-size:16px;
-  }
-  .fbproducts-field input::placeholder, .fbproducts-field textarea::placeholder { font-size:11px; color:var(--muted); }
-  .fbproducts-field textarea { resize:vertical; }
-  .fbproducts-field [aria-invalid="true"] { border-color:#a13832; }
-  .fbproducts-field input[type="file"] { font-size:11px; padding:12px 8px; }
-  .fbproducts-field input::file-selector-button {
-    padding:8px 10px; margin-right:10px; border:1px solid var(--line);
-    background:var(--bone); color:var(--ink); cursor:pointer;
-  }
-  .fbproducts-field-error { margin:8px 0 0; color:#a13832; font-size:11px; }
-  .fbproducts-help { margin:0 0 20px; color:var(--muted); font-size:11px; line-height:1.9; }
-  .fbproducts-previews { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:20px; }
-  .fbproducts-preview { position:relative; aspect-ratio:1; min-width:0; background:var(--bone); }
-  .fbproducts-preview img { width:100%; height:100%; padding:12px; object-fit:contain; }
-  .fbproducts-preview > span { position:absolute; bottom:8px; left:8px; padding:4px 7px; background:var(--paper); font-size:9px; }
-  .fbproducts-preview button {
-    position:absolute; top:6px; right:6px; display:grid; place-items:center;
-    width:44px; height:44px; border:1px solid var(--line); background:var(--paper); color:var(--ink);
-  }
-  .fbproducts-featured { display:flex; align-items:flex-start; gap:12px; padding:18px; margin-top:23px; border:1px solid var(--line); background:var(--bone); cursor:pointer; }
-  .fbproducts-featured input { width:17px; height:17px; margin-top:3px; flex-shrink:0; accent-color:var(--ink); }
-  .fbproducts-featured strong { display:block; font-size:12px; font-weight:500; }
-  .fbproducts-featured > span > span { display:block; margin-top:6px; color:var(--muted); font-size:10px; line-height:1.9; }
-  .fbproducts-form-footer { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; margin-top:24px; }
-  .fbproducts-delete {
-    display:flex; align-items:center; justify-content:space-between; gap:20px;
-    padding:22px; margin-bottom:20px; border:1px solid #dfbdb5; background:#fbefec;
-  }
-  .fbproducts-delete h2 { margin:0; font-size:19px; font-weight:500; overflow-wrap:anywhere; }
-  .fbproducts-delete p { margin:8px 0 0; color:#a13832; font-size:11px; }
-  .fbproducts-delete > div:last-child { display:flex; flex-shrink:0; gap:10px; }
-  .fbproducts-error, .fbproducts-success { margin:20px 0 0; padding:15px 18px; font-size:12px; overflow-wrap:anywhere; }
-  .fbproducts-error { border:1px solid #dfbdb5; background:#fbefec; color:#a13832; }
-  .fbproducts-success { border:1px solid var(--line); background:#e9eddf; }
-  .fbproducts-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:300px; padding:30px; text-align:center; color:var(--muted); font-size:12px; }
-  .fbproducts-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
-  .fbproducts-spin { animation:fbproductsSpin 1s linear infinite; }
-  @keyframes fbproductsSpin { to { transform:rotate(360deg); } }
-  @keyframes fbproductsEnter { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-  @media(max-width:1100px) {
-    .fbproducts-heading { align-items:flex-start; flex-direction:column; }
-    .fbproducts-tools { grid-template-columns:repeat(3,minmax(0,1fr)); }
-    .fbproducts-search { grid-column:1 / -1; }
-    .fbproducts-editor { grid-template-columns:minmax(0,1fr); }
-    .fbproducts-product { gap:18px; }
-  }
-  @media(max-width:720px) {
-    .fbproducts-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .fbproducts-summary > div:nth-child(2) { border-right:0; }
-    .fbproducts-summary > div:nth-child(3), .fbproducts-summary > div:nth-child(4) { border-top:1px solid var(--line); }
-    .fbproducts-tools { grid-template-columns:minmax(0,1fr); }
-    .fbproducts-product { grid-template-columns:80px minmax(0,1fr); padding:18px; }
-    .fbproducts-product-image { width:80px; height:100px; }
-    .fbproducts-product h2 { font-size:18px; }
-    .fbproducts-product-values { text-align:left; }
-    .fbproducts-product-actions { justify-content:flex-end; }
-    .fbproducts-panel { padding:22px; }
-    .fbproducts-delete { align-items:flex-start; flex-direction:column; }
-    .fbproducts-results { align-items:flex-start; flex-direction:column; gap:10px; }
-    .fbproducts-results > div { width:100%; justify-content:space-between; }
-  }
-  @media(max-width:420px) {
-    .fbproducts-fields { grid-template-columns:minmax(0,1fr); }
-    .fbproducts-panel { padding:20px 18px; }
-    .fbproducts-actions { width:100%; flex-wrap:wrap; }
-    .fbproducts-actions > button { flex:1; }
-    .fbproducts-delete > div:last-child { flex-wrap:wrap; width:100%; }
-    .fbproducts-summary > div { padding:18px; }
-    .fbproducts-product-values strong { font-size:18px; }
-  }
-  @media(prefers-reduced-motion:reduce) {
-    .fbproducts *, .fbproducts *::before, .fbproducts *::after {
-      animation:none !important; transition:none !important;
-    }
-  }
-`;
 
 export default Products;

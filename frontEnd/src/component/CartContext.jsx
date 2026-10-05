@@ -7,10 +7,12 @@ import React, {
   useState,
 } from "react";
 
+import storeInfo from "../storeInfo";
+
 const CartContext = createContext(null);
 
-const CART_STORAGE_KEY = "fablebelle-cart";
-const LEGACY_CART_STORAGE_KEY = "fablebelle-cart";
+// The key name lives in src/storeInfo.js
+const CART_STORAGE_KEY = storeInfo.storageKeys.cart;
 
 const getProductId = (product) => {
   const id = product?.id ?? product?._id;
@@ -89,13 +91,7 @@ const readStoredCart = () => {
       return normalizeCart(JSON.parse(savedCart));
     }
 
-    const legacyCart = window.localStorage.getItem(
-      LEGACY_CART_STORAGE_KEY
-    );
-
-    return legacyCart
-      ? normalizeCart(JSON.parse(legacyCart))
-      : [];
+    return [];
   } catch {
     return [];
   }

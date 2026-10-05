@@ -1,34 +1,42 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDown, ArrowUpRight, ImageOff, Plus } from "lucide-react";
+import { ArrowDown, ArrowUpRight, ImageOff, ShoppingBag } from "lucide-react";
 
 import { API_BASE_URL } from "../config";
 import storeInfo from "../storeInfo";
+import Reveal from "./Reveal";
 
 const SERVER_URL = API_BASE_URL.replace(/\/+$/, "");
 const API_URL = `${SERVER_URL}/api/products`;
 
-const moments = [
-  {
-    id: "work",
-    name: "On the move",
-    description: "commute, errands, everything between",
-  },
-  {
-    id: "weekend",
-    name: "Open plans",
-    description: "time for wherever the day leads",
-  },
-  {
-    id: "evening",
-    name: "After hours",
-    description: "one reservation, many possibilities",
-  },
-];
+const FEATURED_COUNT = 6;
 
-const carryOptions = [
-  { id: "essentials", name: "Just the essentials" },
-  { id: "more", name: "A little more" },
+// The three shape cards. "search" is the category name the shop page is opened with.
+const SHAPES = [
+  {
+    label: "01 / The evening edit",
+    name: "Shoulder bags",
+    search: "Shoulder Bags",
+    image: "/images/shape-shoulder.webp",
+    alt: "Lavender mini shoulder bag",
+    tone: "",
+  },
+  {
+    label: "02 / A lighter way",
+    name: "Crossbody",
+    search: "Crossbody Bags",
+    image: "/images/shape-crossbody.webp",
+    alt: "Burnt orange crossbody bag",
+    tone: "tt-category-card--peach",
+  },
+  {
+    label: "03 / The everyday edit",
+    name: "Tote bags",
+    search: "Tote Bags",
+    image: "/images/shape-tote.webp",
+    alt: "Sage green tote bag",
+    tone: "tt-category-card--mint",
+  },
 ];
 
 const getProductId = (product) => product?._id || product?.id;
@@ -49,6 +57,12 @@ const getCategory = (product) => {
   return product?.category?.name || "Handbag";
 };
 
+const getPriceValue = (product) => {
+  const value = Number(product?.price);
+
+  return Number.isFinite(value) ? value : 0;
+};
+
 const getPrice = (product) => {
   if (
     product?.price === null ||
@@ -63,35 +77,55 @@ const getPrice = (product) => {
   return Number.isFinite(value) ? `$${value.toFixed(2)}` : "";
 };
 
-const ProductImage = ({ product, className = "", eager = false }) => {
-  const source = getImageUrl(product?.images?.[0]);
+const getName = (product) =>
+  product?.name || `${storeInfo.businessName} Handbag`;
+
+const pad = (number) => String(number).padStart(2, "0");
+
+// Main image, with a second image that fades in on hover when there is one
+const ProductImages = ({ product }) => {
+  const main = getImageUrl(product?.images?.[0]);
+  const second = getImageUrl(product?.images?.[1]);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     setFailed(false);
-  }, [source]);
+  }, [main]);
 
-  if (!source || failed) {
+  if (!main || failed) {
     return (
-      <div
-        className={`flex items-center justify-center ${className}`}
+      <span
+        className="tt-product-empty"
         role="img"
         aria-label="Product image unavailable"
       >
-        <ImageOff size={40} strokeWidth={1.3} className="opacity-40" />
-      </div>
+        <ImageOff size={34} strokeWidth={1.3} aria-hidden="true" />
+      </span>
     );
   }
 
   return (
-    <img
-      src={source}
-      alt={product?.name || `${storeInfo.businessName} handbag`}
-      loading={eager ? "eager" : "lazy"}
-      fetchPriority={eager ? "high" : "auto"}
-      onError={() => setFailed(true)}
-      className={className}
-    />
+    <>
+      <img
+        src={main}
+        alt={getName(product)}
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+
+      {second && (
+        <img
+          src={second}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          className="tt-product-alt"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+    </>
   );
 };
 
@@ -99,11 +133,9 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [moment, setMoment] = useState("");
-  const [carry, setCarry] = useState("");
-  const [openId, setOpenId] = useState(null);
 
-  const rowRefs = useRef({});
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [sortMode, setSortMode] = useState("featured");
 
   useEffect(() => {
     let isMounted = true;
@@ -147,531 +179,357 @@ const Home = () => {
     };
   }, []);
 
+  // Newest products first
   const latestProducts = useMemo(
     () =>
       [...products]
+        .filter((product) => getProductId(product))
         .sort((a, b) => {
           const dateA = new Date(a?.createdAt || 0).getTime() || 0;
           const dateB = new Date(b?.createdAt || 0).getTime() || 0;
 
           return dateB - dateA;
         })
-        .slice(0, 10)
-        .filter((product) => getProductId(product)),
+        .slice(0, FEATURED_COUNT),
     [products],
   );
 
-  /*
-   * Each day selects a different product position.
-   * "A little more" displays the next product.
-   * This is a browsing interaction, not a size/occasion classification.
-   */
-  const finderMatch = useMemo(() => {
-    if (!latestProducts.length || !moment) return null;
-
-    const momentIndex = {
-      work: 0,
-      weekend: 1,
-      evening: 2,
-    };
-
-    const baseIndex = momentIndex[moment] ?? 0;
-    const carryOffset = carry === "more" ? 1 : 0;
-    const productIndex =
-      (baseIndex + carryOffset) % latestProducts.length;
-
-    return latestProducts[productIndex];
-  }, [moment, carry, latestProducts]);
-
-  const stageProduct = finderMatch || latestProducts[0];
-  const stageId = getProductId(stageProduct);
-
-  const stageIndex = latestProducts.findIndex(
-    (product) => getProductId(product) === stageId,
+  const filters = useMemo(
+    () => [...new Set(latestProducts.map(getCategory))],
+    [latestProducts],
   );
 
-  const finderHint = loading
-    ? "Loading the collection..."
-    : loadError
-      ? "The collection is temporarily unavailable."
-      : !latestProducts.length
-        ? "Your next favourite is coming soon."
-        : !moment
-          ? "Choose the kind of day to explore a piece."
-          : !carry
-            ? "Now choose what comes along to explore another view of the collection."
-            : "Explore this piece and check its full details for size and fit.";
+  const visibleProducts = useMemo(() => {
+    const list = latestProducts.filter(
+      (product) =>
+        activeFilter === "all" || getCategory(product) === activeFilter,
+    );
 
-  const handleMomentChange = (id) => {
-    setMoment(id);
-    setCarry("");
-  };
+    if (sortMode === "price-asc") {
+      list.sort((a, b) => getPriceValue(a) - getPriceValue(b));
+    }
 
-  const showStageProduct = () => {
-    if (!stageId) return;
+    if (sortMode === "price-desc") {
+      list.sort((a, b) => getPriceValue(b) - getPriceValue(a));
+    }
 
-    setOpenId(stageId);
+    if (sortMode === "name") {
+      list.sort((a, b) => getName(a).localeCompare(getName(b)));
+    }
 
-    requestAnimationFrame(() => {
-      const row = rowRefs.current[stageId];
-
-      if (!row) return;
-
-      row.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-          .matches
-          ? "auto"
-          : "smooth",
-        block: "start",
-      });
-
-      row.querySelector("button")?.focus({ preventScroll: true });
-    });
-  };
+    return list;
+  }, [latestProducts, activeFilter, sortMode]);
 
   return (
-    <div className="min-w-0 bg-paper text-navy">
-      {/* BAG FINDER */}
-      <section
-        id="finder"
-        className="bg-champagne px-5 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-24"
-      >
-        <div className="mx-auto max-w-[1520px]">
-          <div className="mb-10 grid gap-6 lg:mb-14 lg:grid-cols-[1.4fr_0.6fr] lg:items-end lg:gap-12">
-            <div className="min-w-0">
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.15em] sm:text-xs">
-                {storeInfo.businessName} / The bag finder
-              </p>
+    <>
+      {/* ================= HERO ================= */}
 
-              <h1 className="text-[clamp(3.2rem,8vw,8rem)] font-medium leading-[0.98] tracking-[-0.075em]">
-                Where are we
-                <span className="block text-gold lg:ml-[8%]">
-                  going?
-                </span>
-              </h1>
-            </div>
+      <section className="tt-hero" aria-labelledby="tt-hero-title">
+        <div className="tt-hero-copy">
+          <p className="tt-eyebrow">
+            <span className="tt-eyebrow-dot" />
+            The bag edit / Vol. 01
+          </p>
 
-            <div className="max-w-sm">
-              <p className="text-sm leading-7 text-navy/85 sm:text-base">
-                Start with the day ahead. Click through pieces from the
-                collection, then compare their full details below.
-              </p>
+          <h1 id="tt-hero-title">
+            Carry your
+            <br />
+            <em>own story.</em>
+          </h1>
 
-              <a
-                href="#collection"
-                className="mt-5 inline-flex min-h-11 items-center gap-5 border-b border-navy text-sm font-semibold"
-              >
-                Or browse the collection
-                <ArrowDown size={17} aria-hidden="true" />
-              </a>
-            </div>
+          <p>
+            Find your way to carry. Explore shapes for your daily routines
+            and the moments in between.
+          </p>
+
+          <div className="tt-hero-buttons">
+            <Link to="/shop" className="tt-button tt-button--dark">
+              Shop the collection
+              <ArrowUpRight size={18} strokeWidth={1.8} aria-hidden="true" />
+            </Link>
+
+            <a href="#shapes" className="tt-button tt-button--outline">
+              Find your shape
+            </a>
           </div>
 
-          <div className="grid border border-navy shadow-[8px_8px_0_rgba(23,36,59,0.14)] lg:grid-cols-2 lg:shadow-[14px_14px_0_rgba(23,36,59,0.14)]">
-            {/* FINDER CONTROLS */}
-            <div className="flex min-w-0 flex-col bg-paper p-6 sm:p-9 xl:p-12">
-              <fieldset className="min-w-0">
-                <legend className="mb-5 flex items-center gap-3 text-lg font-semibold tracking-tight">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-navy text-[10px]">
-                    01
-                  </span>
-                  What kind of day?
-                </legend>
+          <div className="tt-hero-foot">
+            <span>
+              {storeInfo.businessName} <i /> The new edit
+            </span>
+            <span>
+              Scroll to discover
+              <ArrowDown size={12} strokeWidth={2.4} aria-hidden="true" />
+            </span>
+          </div>
+        </div>
 
-                <div className="border-t border-navy/25">
-                  {moments.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      aria-pressed={moment === item.id}
-                      onClick={() => handleMomentChange(item.id)}
-                      className={`flex min-h-20 w-full items-center justify-between gap-4 border-b border-navy/25 px-3 py-4 text-left transition-colors ${
-                        moment === item.id
-                          ? "bg-navy text-white"
-                          : "hover:bg-champagne"
-                      }`}
-                    >
-                      <span className="min-w-0">
-                        <span className="block text-xl font-medium tracking-tight">
-                          {item.name}
-                        </span>
+        <div className="tt-hero-visual">
+          <img
+            src="/images/hero.webp"
+            alt="Model carrying a lavender handbag in a luminous studio"
+            width="1586"
+            height="992"
+            fetchPriority="high"
+          />
 
-                        <span className="mt-1 block text-xs leading-5 opacity-80">
-                          {item.description}
-                        </span>
-                      </span>
+          <span className="tt-hero-label">
+            THE NEW
+            <br />
+            COLLECTION
+          </span>
+        </div>
+      </section>
 
-                      <ArrowUpRight
-                        size={20}
-                        className="shrink-0"
-                        aria-hidden="true"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
+      {/* ================= VALUE ROW ================= */}
 
-              <fieldset
-                disabled={!moment}
-                className="mt-8 min-w-0 disabled:opacity-45"
+      <div className="tt-values">
+        <span>
+          <b>01</b> Designed to stand out
+        </span>
+        <span>
+          <b>02</b> Made for everyday plans
+        </span>
+        <span>
+          <b>03</b> A shape for every mood
+        </span>
+      </div>
+
+      {/* ================= SHAPE GUIDE ================= */}
+
+      <section
+        className="tt-wrap"
+        id="shapes"
+        style={{ scrollMarginTop: 102 }}
+      >
+        <Reveal className="tt-section-title">
+          <div>
+            <p className="tt-eyebrow tt-eyebrow--accent">The shape guide / 01</p>
+            <h2>
+              Find your kind
+              <br />
+              of <em>carry.</em>
+            </h2>
+          </div>
+
+          <p>Start with a silhouette that feels like you. The rest follows.</p>
+        </Reveal>
+
+        <div className="tt-category-grid">
+          {SHAPES.map((shape, index) => (
+            <Reveal key={shape.search} delay={index * 110}>
+              <Link
+                to={`/shop?category=${encodeURIComponent(shape.search)}`}
+                className={`tt-category-card ${shape.tone}`}
               >
-                <legend className="mb-5 flex items-center gap-3 text-lg font-semibold tracking-tight">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-navy text-[10px]">
-                    02
-                  </span>
-                  What comes along?
-                </legend>
-
-                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                  {carryOptions.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      aria-pressed={carry === item.id}
-                      onClick={() => setCarry(item.id)}
-                      className={`inline-flex min-h-12 items-center justify-between gap-4 border border-navy px-4 py-3 text-sm font-semibold transition-colors ${
-                        carry === item.id
-                          ? "bg-navy text-white"
-                          : "hover:bg-champagne"
-                      }`}
-                    >
-                      {item.name}
-                      <ArrowUpRight size={16} aria-hidden="true" />
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-
-              <p
-                role="status"
-                className="mt-auto pt-8 text-xs leading-6 text-mute"
-              >
-                {finderHint}
-              </p>
-            </div>
-
-            {/* PRODUCT STAGE */}
-            <div className="relative flex min-w-0 flex-col overflow-hidden bg-navy p-6 text-paper sm:p-9 xl:p-12">
-              <div
-                aria-live="polite"
-                aria-atomic="true"
-                className="relative z-10 flex items-start justify-between gap-4"
-              >
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-champagne">
-                    {finderMatch
-                      ? "A piece to explore"
-                      : "Your starting point"}
-                  </p>
-
-                  <p className="mt-2 break-words text-xl font-medium tracking-tight sm:text-2xl">
-                    {stageProduct?.name ||
-                      (loading
-                        ? "Loading collection..."
-                        : "The collection")}
-                  </p>
-
-                  {stageProduct && (
-                    <p className="mt-1 text-sm text-champagne">
-                      {getPrice(stageProduct)}
-                    </p>
-                  )}
-                </div>
-
-                {!!latestProducts.length && (
-                  <span className="shrink-0 text-[10px] tracking-widest">
-                    {String(stageIndex + 1).padStart(2, "0")} /{" "}
-                    {String(latestProducts.length).padStart(2, "0")}
-                  </span>
-                )}
-              </div>
-
-              <div className="relative my-5 grid min-h-[280px] flex-1 place-items-center sm:min-h-[380px] lg:min-h-[420px]">
-                <div
-                  aria-hidden="true"
-                  className="absolute aspect-square w-[74%] max-w-[420px] rounded-full bg-[radial-gradient(circle_at_35%_25%,#FFFAF3,#EADCC8_70%,#C8B797)]"
+                <img
+                  src={shape.image}
+                  alt={shape.alt}
+                  loading="lazy"
+                  width="1254"
+                  height="1254"
                 />
 
-                <div
-                  aria-hidden="true"
-                  className="animate-orbit absolute aspect-square w-[85%] max-w-[480px] rounded-full border border-champagne/30"
-                />
+                <span className="tt-category-copy">
+                  <small>{shape.label.toUpperCase()}</small>
+                  <strong>{shape.name}</strong>
+                  <ArrowUpRight size={26} strokeWidth={1.6} aria-hidden="true" />
+                </span>
+              </Link>
+            </Reveal>
+          ))}
+        </div>
+      </section>
 
-                {stageProduct ? (
-                  <div
-                    key={stageId}
-                    className="animate-fade-down relative z-10 w-full"
-                  >
-                    <ProductImage
-                      product={stageProduct}
-                      eager
-                      className="h-[280px] w-full object-contain p-3 text-navy drop-shadow-[12px_22px_18px_rgba(0,0,0,0.25)] sm:h-[380px] lg:h-[420px]"
-                    />
-                  </div>
-                ) : (
-                  <p className="relative z-10 px-6 text-center text-sm text-navy">
-                    {loading
-                      ? "Loading products..."
-                      : loadError
-                        ? "Please check back shortly."
-                        : "New pieces are coming soon."}
-                  </p>
-                )}
-              </div>
+      {/* ================= COLLECTION ================= */}
 
-              <div className="relative z-10 border-t border-paper/35 pt-5">
-                <p className="text-xs uppercase tracking-widest text-champagne">
-                  {stageProduct
-                    ? getCategory(stageProduct)
-                    : storeInfo.businessName}
-                </p>
+      <section className="tt-wrap tt-shop" id="collection">
+        <Reveal className="tt-section-title">
+          <div>
+            <p className="tt-eyebrow tt-eyebrow--accent">The collection / 02</p>
+            <h2>
+              Meet the
+              <br />
+              <em>new icons.</em>
+            </h2>
+          </div>
 
-                <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-                  <p className="min-w-0 flex-1 break-words text-2xl font-medium tracking-tight sm:text-3xl">
-                    {stageProduct?.name || "Find your way to carry"}
-                  </p>
+          <p>Each bag has a personality. Find the one that matches yours.</p>
+        </Reveal>
 
-                  {stageProduct && (
-                    <span className="text-lg font-semibold">
-                      {getPrice(stageProduct)}
-                    </span>
-                  )}
-                </div>
+        {loading ? (
+          <div className="tt-product-grid" role="status" aria-label="Loading products">
+            {Array.from({ length: FEATURED_COUNT }).map((_, index) => (
+              <div key={index} className="tt-skeleton" />
+            ))}
+          </div>
+        ) : loadError ? (
+          <div className="tt-state" role="alert">
+            <p>{loadError}</p>
 
+            <Link to="/shop" className="tt-button tt-button--dark">
+              Visit shop
+              <ArrowUpRight size={18} strokeWidth={1.8} aria-hidden="true" />
+            </Link>
+          </div>
+        ) : latestProducts.length === 0 ? (
+          <div className="tt-state">
+            <ShoppingBag size={30} style={{ margin: "0 auto" }} aria-hidden="true" />
+            <h3>Collection coming soon</h3>
+            <p>
+              Products are being prepared for the {storeInfo.businessName}{" "}
+              collection. Please check back soon.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="tt-toolbar">
+              <div className="tt-filters" role="group" aria-label="Filter products">
                 <button
                   type="button"
-                  disabled={!stageId}
-                  onClick={showStageProduct}
-                  className="mt-5 inline-flex min-h-11 items-center gap-4 border-b border-champagne text-left text-sm font-semibold text-champagne disabled:opacity-50"
+                  className={`tt-chip${activeFilter === "all" ? " is-active" : ""}`}
+                  aria-pressed={activeFilter === "all"}
+                  onClick={() => setActiveFilter("all")}
                 >
-                  See this bag in the collection
-                  <ArrowUpRight
-                    size={18}
-                    className="shrink-0"
-                    aria-hidden="true"
-                  />
+                  All {latestProducts.length}
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* COLLECTION LEDGER */}
-      <section
-        id="collection"
-        className="scroll-mt-6 px-5 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-28"
-      >
-        <div className="mx-auto max-w-[1520px]">
-          <div className="mb-10 flex flex-col gap-6 lg:mb-14 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-mute sm:text-xs">
-                {storeInfo.businessName} / Latest collection
-              </p>
-
-              <h2 className="mt-4 text-[clamp(2.6rem,5vw,5.8rem)] font-medium leading-none tracking-[-0.065em]">
-                The carry ledger.
-              </h2>
-            </div>
-
-            <div className="max-w-sm">
-              <p className="text-sm leading-7 text-mute sm:text-base">
-                Ways to take the day with you. Open any line to see the
-                piece, then explore its full product details.
-              </p>
-
-              <Link
-                to="/shop"
-                className="mt-3 inline-flex min-h-11 items-center gap-4 text-sm font-semibold"
-              >
-                View all products
-                <ArrowUpRight size={18} aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-
-          {loading ? (
-            <div
-              role="status"
-              className="border-y border-navy/25 py-16 text-center text-sm text-mute"
-            >
-              Loading products...
-            </div>
-          ) : loadError ? (
-            <div
-              role="alert"
-              className="border border-navy/25 bg-champagne/30 px-6 py-14 text-center"
-            >
-              <p className="text-sm leading-7 text-mute">{loadError}</p>
-
-              <Link
-                to="/shop"
-                className="mt-6 inline-flex min-h-12 items-center gap-4 bg-navy px-6 py-3 text-sm font-semibold text-white"
-              >
-                Visit shop
-                <ArrowUpRight size={17} />
-              </Link>
-            </div>
-          ) : !latestProducts.length ? (
-            <div className="border border-navy/25 px-6 py-14 text-center">
-              <h3 className="text-2xl font-medium tracking-tight">
-                Collection coming soon
-              </h3>
-
-              <p className="mt-4 text-sm leading-7 text-mute">
-                Products are being prepared for the{" "}
-                {storeInfo.businessName} collection. Please check back soon.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div
-                aria-hidden="true"
-                className="hidden grid-cols-[6%_44%_27%_16%_7%] px-4 pb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-mute md:grid"
-              >
-                <span>No.</span>
-                <span>Piece</span>
-                <span>Collection</span>
-                <span>Price</span>
-                <span className="text-right">Details</span>
+                {filters.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={`tt-chip${activeFilter === category ? " is-active" : ""}`}
+                    aria-pressed={activeFilter === category}
+                    onClick={() => setActiveFilter(category)}
+                  >
+                    {category}
+                  </button>
+                ))}
               </div>
 
-              <div className="border-b border-navy">
-                {latestProducts.map((product, index) => {
-                  const id = getProductId(product);
-                  const expanded = openId === id;
-                  const detailId = `product-detail-${id}`;
-                  const triggerId = `product-trigger-${id}`;
+              <label className="tt-sort">
+                Sort by
+                <select
+                  value={sortMode}
+                  onChange={(event) => setSortMode(event.target.value)}
+                >
+                  <option value="featured">Newest</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                  <option value="name">Name: A to Z</option>
+                </select>
+              </label>
+            </div>
 
-                  return (
-                    <article
-                      key={id}
-                      ref={(element) => {
-                        if (element) {
-                          rowRefs.current[id] = element;
-                        } else {
-                          delete rowRefs.current[id];
-                        }
-                      }}
-                      className="scroll-mt-6 border-t border-navy"
-                    >
-                      <h3>
-                        <button
-                          id={triggerId}
-                          type="button"
-                          aria-expanded={expanded}
-                          aria-controls={detailId}
-                          onClick={() =>
-                            setOpenId(expanded ? null : id)
-                          }
-                          className={`grid min-h-24 w-full grid-cols-[24px_minmax(0,1fr)_30px] items-center gap-x-3 gap-y-2 px-2 py-5 text-left transition-colors md:min-h-28 md:grid-cols-[6%_44%_27%_16%_7%] md:gap-0 md:px-4 ${
-                            expanded
-                              ? "bg-champagne"
-                              : "hover:bg-champagne/50"
-                          }`}
-                        >
-                          <span className="row-span-2 text-xs font-semibold text-mute md:row-span-1">
-                            {String(index + 1).padStart(2, "0")}
-                          </span>
+            <div className="tt-product-grid">
+              {visibleProducts.map((product, index) => {
+                const id = getProductId(product);
+                const name = getName(product);
 
-                          <span className="min-w-0 break-words pr-3 text-xl font-medium leading-tight tracking-[-0.045em] sm:text-2xl lg:text-3xl">
-                            {product?.name ||
-                              `${storeInfo.businessName} Handbag`}
-                          </span>
+                return (
+                  <Reveal
+                    as="article"
+                    key={id}
+                    className="tt-product-card"
+                    delay={(index % 3) * 90}
+                  >
+                    <div className="tt-product-media">
+                      <Link to={`/shop/${id}`} aria-label={`View ${name}`}>
+                        <ProductImages product={product} />
+                      </Link>
 
-                          <span className="col-start-2 row-start-2 min-w-0 break-words text-xs text-mute md:col-start-auto md:row-start-auto md:pr-4 md:text-sm">
-                            {getCategory(product)}
-                          </span>
+                      <span className="tt-product-index">
+                        {pad(index + 1)} / {pad(visibleProducts.length)}
+                      </span>
 
-                          <span className="col-start-2 row-start-3 text-sm font-semibold md:col-start-auto md:row-start-auto">
-                            {getPrice(product)}
-                          </span>
-
-                          <span className="col-start-3 row-span-3 row-start-1 flex h-7 w-7 items-center justify-center justify-self-end rounded-full border border-navy md:col-start-auto md:row-span-1 md:row-start-auto md:h-9 md:w-9">
-                            <Plus
-                              size={18}
-                              className={`transition-transform ${
-                                expanded ? "rotate-45" : ""
-                              }`}
-                              aria-hidden="true"
-                            />
-                          </span>
-                        </button>
-                      </h3>
-
-                      <div
-                        id={detailId}
-                        hidden={!expanded}
-                        role="region"
-                        aria-labelledby={triggerId}
-                        className="animate-unfold grid bg-paper md:grid-cols-2"
+                      <Link
+                        to={`/shop/${id}`}
+                        className="tt-quick-add"
+                        tabIndex={-1}
+                        aria-hidden="true"
                       >
-                        <div className="relative grid min-h-[300px] place-items-center overflow-hidden bg-champagne/75 sm:min-h-[380px] lg:min-h-[480px]">
-                          <div
-                            aria-hidden="true"
-                            className="absolute aspect-square w-[65%] rounded-full border border-navy/20"
-                          />
+                        View product ↗
+                      </Link>
+                    </div>
 
-                          <ProductImage
-                            product={product}
-                            className="relative h-[280px] w-[90%] object-contain p-5 drop-shadow-[10px_18px_16px_rgba(23,36,59,0.15)] sm:h-[350px] lg:h-[430px]"
-                          />
-                        </div>
+                    <div className="tt-product-meta">
+                      <div>
+                        <p>{getCategory(product)}</p>
 
-                        <div className="flex min-w-0 flex-col items-start justify-center p-6 sm:p-9 lg:p-12">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-mute">
-                            A closer look
-                          </p>
-
-                          <h4 className="mt-4 break-words text-2xl font-medium leading-tight tracking-[-0.045em] lg:text-3xl">
-                            {product?.name ||
-                              `${storeInfo.businessName} Handbag`}
-                          </h4>
-
-                          <dl className="mb-7 mt-7 w-full border-t border-navy/25 text-sm">
-                            <div className="flex justify-between gap-5 border-b border-navy/25 py-3">
-                              <dt className="font-semibold">
-                                Collection
-                              </dt>
-                              <dd className="min-w-0 break-words text-right text-mute">
-                                {getCategory(product)}
-                              </dd>
-                            </div>
-
-                            {getPrice(product) && (
-                              <div className="flex justify-between gap-5 border-b border-navy/25 py-3">
-                                <dt className="font-semibold">Price</dt>
-                                <dd>{getPrice(product)}</dd>
-                              </div>
-                            )}
-                          </dl>
-
-                          <Link
-                            to={`/shop/${id}`}
-                            className="inline-flex min-h-12 w-full items-center justify-between gap-5 bg-navy px-5 py-4 text-sm font-semibold text-white transition-colors hover:bg-navy-dark sm:w-auto"
-                          >
-                            View product
-                            <ArrowUpRight
-                              size={19}
-                              aria-hidden="true"
-                            />
-                          </Link>
-
-                          <p className="mt-4 text-xs leading-6 text-mute">
-                            See available options and full details on
-                            the product page.
-                          </p>
-                        </div>
+                        <h3>
+                          <Link to={`/shop/${id}`}>{name}</Link>
+                        </h3>
                       </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
+
+                      {getPrice(product) && (
+                        <strong>{getPrice(product)}</strong>
+                      )}
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
+
+            <div className="tt-shop-more">
+              <Link to="/shop" className="tt-text-arrow">
+                View all products
+                <ArrowUpRight size={18} strokeWidth={1.8} aria-hidden="true" />
+              </Link>
+            </div>
+          </>
+        )}
       </section>
-    </div>
+
+      {/* ================= STORY PANEL ================= */}
+
+      <section className="tt-story">
+        <div className="tt-story-image">
+          <img
+            src="/images/shape-tote.webp"
+            alt="Sage tote bag in a studio setting"
+            loading="lazy"
+            width="1254"
+            height="1254"
+          />
+          <span>THE DETAILS / 03</span>
+        </div>
+
+        <Reveal className="tt-story-copy">
+          <p className="tt-eyebrow">A little more you</p>
+
+          <h2>
+            Good design goes <em>where you go.</em>
+          </h2>
+
+          <p>
+            Ways to take the day with you. Open any piece to see available
+            options and its full details on the product page.
+          </p>
+
+          <Link to="/about" className="tt-button tt-button--light">
+            Get to know {storeInfo.businessName}
+            <ArrowUpRight size={18} strokeWidth={1.8} aria-hidden="true" />
+          </Link>
+        </Reveal>
+      </section>
+
+      {/* ================= CLOSING CTA ================= */}
+
+      <Reveal as="section" className="tt-wrap tt-closing">
+        <p className="tt-eyebrow tt-eyebrow--accent">Questions / 04</p>
+
+        <h2>
+          More to know?
+          <br />
+          <em>We've got you.</em>
+        </h2>
+
+        <Link to="/faqs" className="tt-text-arrow">
+          Explore the FAQ
+          <ArrowUpRight size={18} strokeWidth={1.8} aria-hidden="true" />
+        </Link>
+      </Reveal>
+    </>
   );
 };
 

@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { CartProvider } from "./component/CartContext";
 import ScrollToTop from "./component/ScrollToTop";
 import AdminRoute from "./component/AdminRoute";
+import storeInfo from "./storeInfo";
 
 import Layout from "./component/Layout";
 import Home from "./component/Home";
@@ -253,60 +254,36 @@ const App = () => {
           <Route
             path="*"
             element={
-              <main
-                className="flex min-h-screen items-center justify-center bg-[#FFFAF3] px-5 py-12 text-[#17243B]"
-                style={{
-                  fontFamily: "'Onest', sans-serif",
-                }}
-              >
-                <div className="w-full max-w-2xl border border-[#17243B]/25 bg-[#FFFAF3] shadow-[10px_10px_0_#EADCC8] sm:shadow-[16px_16px_0_#EADCC8]">
-                  <div className="flex items-center justify-between gap-4 border-b border-[#17243B]/25 px-6 py-5 sm:px-10">
-                    <Link
-                      to="/"
-                      className="text-sm font-semibold tracking-tight transition-colors hover:text-[#B58A50] sm:text-base"
-                    >
-                      FableBelle.com
-                    </Link>
+              <Layout>
+                <section className="tt-info-hero" data-index="404">
+                  <p className="tt-eyebrow">
+                    <span className="tt-eyebrow-dot" />
+                    {storeInfo.businessName} / Page unavailable
+                  </p>
 
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#535B67]">
-                      Page unavailable
-                    </span>
-                  </div>
+                  <h1>
+                    A little <em>off course.</em>
+                  </h1>
 
-                  <div className="px-6 py-12 sm:px-10 sm:py-16">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#B58A50] sm:text-xs">
-                      A little off course
-                    </p>
+                  <p>
+                    The page you&apos;re looking for doesn&apos;t exist or may
+                    have been moved. Let&apos;s find your way back.
+                  </p>
 
-                    <h1 className="mt-5 text-[100px] font-medium leading-none tracking-[-0.08em] sm:text-[150px]">
-                      404<span className="text-[#B58A50]">.</span>
-                    </h1>
-
-                    <h2 className="mt-6 text-3xl font-medium leading-tight tracking-[-0.05em] sm:text-4xl">
-                      Let&apos;s find your way back.
-                    </h2>
-
-                    <p className="mt-4 max-w-md text-sm leading-7 text-[#535B67] sm:text-base">
-                      The page you&apos;re looking for doesn&apos;t exist or
-                      may have been moved.
-                    </p>
-
-                    <Link
-                      to="/"
-                      className="mt-8 inline-flex min-h-12 items-center justify-between gap-10 border border-[#17243B] bg-[#17243B] px-6 py-4 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#263956] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#B58A50]"
-                    >
+                  <div className="tt-hero-buttons" style={{ marginTop: 30 }}>
+                    <Link to="/" className="tt-button tt-button--dark">
                       Back to home
                       <span aria-hidden="true">↗</span>
                     </Link>
-                  </div>
 
-                  <div className="border-t border-[#17243B]/25 bg-[#EADCC8] px-6 py-4 sm:px-10">
-                    <p className="text-xs text-[#17243B]">
-                      Thoughtfully carried, clearly explained.
-                    </p>
+                    <Link to="/shop" className="tt-button tt-button--outline">
+                      Shop the collection
+                    </Link>
                   </div>
-                </div>
-              </main>
+                </section>
+
+                <div style={{ height: 80 }} />
+              </Layout>
             }
           />
         </Routes>

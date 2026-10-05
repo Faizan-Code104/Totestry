@@ -13,7 +13,7 @@ const createAdmin = async () => {
 
     console.log("MongoDB connected successfully.");
 
-    const adminName = process.env.ADMIN_NAME || "fablebelle Admin";
+      const adminName = process.env.ADMIN_NAME || "Totestry Admin";
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
