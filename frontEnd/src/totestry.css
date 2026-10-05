@@ -665,7 +665,7 @@ a:hover > .tt-logo-stack .tt-logo-mark { transform: rotate(60deg); }
   background: #f0eef3;
   aspect-ratio: 1 / 1;
 }
-.tt-product-media > a {
+.tt-product-media > a:not(.tt-quick-add) {
   display: block;
   width: 100%;
   height: 100%;
@@ -681,6 +681,8 @@ a:hover > .tt-logo-stack .tt-logo-mark { transform: rotate(60deg); }
 .tt-product-card:hover .tt-product-media img { transform: scale(1.055); }
 .tt-product-media img.tt-product-alt { opacity: 0; }
 .tt-product-card:hover .tt-product-media img.tt-product-alt { opacity: 1; }
+/* Transparent PNGs: hide the first image while the second one shows */
+.tt-product-card:hover .tt-product-media img:has(+ .tt-product-alt) { opacity: 0; }
 .tt-product-empty {
   display: grid;
   place-items: center;
